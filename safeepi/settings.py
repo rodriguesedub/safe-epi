@@ -7,7 +7,7 @@ e instale requirements-postgres.txt.
 import os
 import sys
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote, parse_qs
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,6 +28,15 @@ ALLOWED_HOSTS = os.environ.get("SAFEEPI_ALLOWED_HOSTS", "*").split(",")
 CSRF_TRUSTED_ORIGINS = [
     o for o in os.environ.get("SAFEEPI_CSRF_ORIGINS", "").split(",") if o
 ]
+
+# Detecção automática do Render.com
+_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if _render_host:
+    if _render_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_render_host)
+    _render_origin = f"https://{_render_host}"
+    if _render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_render_origin)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -58,6 +67,21 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# Suporte a arquivos estáticos em produção com WhiteNoise (se instalado)
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
+except ImportError:
+    pass
+
 ROOT_URLCONF = "safeepi.urls"
 
 TEMPLATES = [
@@ -81,14 +105,23 @@ WSGI_APPLICATION = "safeepi.wsgi.application"
 
 def _database_from_url(url):
     p = urlparse(url)
-    return {
+    db_config = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": p.path.lstrip("/"),
-        "USER": p.username or "",
-        "PASSWORD": p.password or "",
+        "USER": unquote(p.username or ""),
+        "PASSWORD": unquote(p.password or ""),
         "HOST": p.hostname or "localhost",
         "PORT": str(p.port or 5432),
     }
+    if p.query:
+        qs = parse_qs(p.query)
+        options = {}
+        for k in ("sslmode", "channel_binding"):
+            if k in qs:
+                options[k] = qs[k][0]
+        if options:
+            db_config["OPTIONS"] = options
+    return db_config
 
 
 _db_url = os.environ.get("DATABASE_URL", "")

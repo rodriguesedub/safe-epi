@@ -1,0 +1,24 @@
+databases:
+  - name: safeepi-db
+    databaseName: safeepi
+    user: safeepi_user
+    plan: free
+
+services:
+  - type: web
+    name: safeepi
+    runtime: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn safeepi.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SAFEEPI_SECRET_KEY
+        generateValue: true
+      - key: SAFEEPI_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: safeepi-db
+          property: connectionString

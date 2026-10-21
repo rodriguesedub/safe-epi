@@ -1,2 +1,4 @@
 -r requirements.txt
 psycopg[binary]>=3.2
+gunicorn>=22.0.0
+whitenoise[brotli]>=6.6.0
