@@ -144,8 +144,27 @@ def demo_iniciar(request):
         extras += f"&vel={vel:g}"
     if request.POST.get("contagem") == "0":
         extras += "&contagem=0"
-    call_command("seed_demo", reset=True, verbosity=0)
+
     from contas.models import Usuario
+    if not Usuario.objects.filter(username="operador").exists():
+        call_command("seed_demo", reset=True, verbosity=0)
+    elif settings.DEBUG:
+        call_command("seed_demo", reset=True, verbosity=0)
+    else:
+        # Em produção com dados já carregados, limpa apenas pendências recentes do João
+        # para que o tour possa recomeçar instantaneamente sem timeout de HTTP
+        try:
+            from cadastros.models import Trabalhador
+            from liberacoes.models import PreLiberacao
+            trab = Trabalhador.objects.filter(matricula="T1001").first()
+            if trab:
+                PreLiberacao.objects.filter(
+                    trabalhador=trab,
+                    status__in=[PreLiberacao.Status.EM_CONFERENCIA, PreLiberacao.Status.AGUARDANDO_APROVACAO]
+                ).delete()
+        except Exception:
+            pass
+
     login(request, Usuario.objects.get(username="operador"),
           backend="contas.backends.UsuarioOuEmailBackend")
     return redirect(f"/?tour={modo}{extras}")

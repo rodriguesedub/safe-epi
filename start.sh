@@ -8,5 +8,5 @@ python manage.py migrate --noinput
 # Cria os usuários e dados de demonstração (se o banco estiver vazio)
 python manage.py seed_demo --se-vazio
 
-# Inicia o servidor Gunicorn
-exec gunicorn safeepi.wsgi:application
+# Inicia o Gunicorn com timeout de 120s (necessário para o reset de demonstração na web)
+exec gunicorn --timeout 120 safeepi.wsgi:application

@@ -332,7 +332,7 @@ class Command(BaseCommand):
 
     def _historico(self):
         eventos = []
-        for dias_atras in range(28, 0, -1):
+        for dias_atras in range(10, 0, -1):
             dia = self.hoje - timedelta(days=dias_atras)
             if dia.weekday() == 6:
                 continue
@@ -350,15 +350,10 @@ class Command(BaseCommand):
                   "eletrica": ["Subestação 1, painel QGBT-02", "Sala elétrica da linha 3", "CCM da ETA"],
                   "producao": ["Linha de envase 1", "Linha de envase 2", "Expedição"]}
         motivos_bloqueio = ["Vento acima de 40 km/h na área de trabalho",
-                            "PT sem assinatura do emitente da área",
-                            "Equipe sem vigia designado para a tarefa"]
-        ultimo_dia = None
+                             "PT sem assinatura do emitente da área",
+                             "Equipe sem vigia designado para a tarefa"]
         limite_atendimento = _now_real() - timedelta(days=3)
         for momento, mat, atividade in eventos:
-            if momento.date() != ultimo_dia:
-                ultimo_dia = momento.date()
-                with no_tempo(momento.replace(hour=6, minute=0)):
-                    gerar_alertas(enviar_email=False)  # o job diário, simulado
             trab = self.t[mat]
             solicitante = self.usuario_de.get(mat, self.tecnico)
             with no_tempo(momento) as relogio:
