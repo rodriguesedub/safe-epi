@@ -1,0 +1,12 @@
+{% if assinaturas %}
+<div class="assinaturas" data-tour="assinaturas">
+  {% for a in assinaturas %}
+  <div class="assinatura-registro">
+    <img class="assinatura-img" src="{{ a.imagem }}" alt="Assinatura de {{ a.signatario_nome }}">
+    <div class="forte">{{ a.signatario_nome }}</div>
+    <div class="sub">{{ a.get_papel_display }}, {{ a.assinado_em|date:"d/m/Y H:i:s" }}</div>
+    <div class="hash">SHA-256 {{ a.hash_sha256|truncatechars:28 }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}<p class="mudo">Nenhuma assinatura ainda.</p>{% endif %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Conferências{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div>
+    <h1>Conferências</h1>
+    <p class="lead">{% if pendentes %}{{ pendentes|length }} pedido{{ pendentes|length|pluralize }} aguardando a conferência física no local.{% else %}Nenhum pedido aguardando conferência.{% endif %}</p>
+  </div>
+  <a class="btn btn-grande" href="{% url 'liberacoes:nova' %}">Nova conferência</a>
+</div>
+
+<section class="secao" data-tour="fila-conferencias">
+  <ul class="lista-simples">
+    {% for x in pendentes %}{% with p=x.pre %}
+    <li data-pre="{{ p.pk }}">
+      <span class="avatar">{{ p.trabalhador.nome|iniciais }}</span>
+      <div class="principal">
+        <span class="forte">{{ p.trabalhador.nome }}</span>
+        <span class="sub">{{ p.atividade.nome }}, {{ p.local }}</span>
+        <span class="sub">Solicitada há {{ p.duracao|duracao }}{% if x.progresso.feitos %}, {{ x.progresso.feitos }} de {{ x.progresso.total }} verificações feitas{% endif %}{% if x.problemas %}, <span style="color:var(--bad)">{{ x.problemas }} EPI{{ x.problemas|pluralize }} com problema</span>{% endif %}</span>
+      </div>
+      <a class="btn btn-pequeno lado" href="{% url 'liberacoes:detalhe' p.pk %}" data-tour="conferir">{% if x.progresso.feitos %}Continuar{% else %}Conferir{% endif %}</a>
+    </li>
+    {% endwith %}{% empty %}
+    <li class="mudo">Quando um colaborador solicitar uma liberação, ela aparece aqui.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% if recentes %}
+<section class="secao">
+  <h2 class="secao-titulo">Conferidas por você</h2>
+  <ul class="lista-simples">
+    {% for p in recentes %}
+    <li>{% sinal p.status|sinal_pre %}<div class="principal"><a href="{% url 'liberacoes:detalhe' p.pk %}">{{ p.trabalhador.nome }}</a><span class="sub">{{ p.atividade.nome }}, {{ p.get_status_display|lower }}, {{ p.conferida_em|date:"d/m H:i" }}</span></div></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

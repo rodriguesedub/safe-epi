@@ -1,0 +1,132 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}{{ pre.numero }}{% endblock %}
+{% block conteudo %}
+<a class="voltar nao-imprimir" href="{% if user.is_tecnico %}{% url 'core:inicio' %}{% elif user.is_operacional %}{% url 'core:inicio' %}{% else %}{% url 'liberacoes:lista' %}{% endif %}">Voltar</a>
+
+{% include "liberacoes/_estado.html" %}
+{% include "liberacoes/_fatos.html" %}
+
+{% if pre.status == "EM_CONFERENCIA" %}
+
+  {% if pode_conferir %}
+    {# ---------------- técnico de segurança: conferência física ---------------- #}
+    <div style="margin-top:28px">{% include "liberacoes/_progresso.html" %}</div>
+    <section class="secao" data-tour="lista-itens">
+      <h2 class="secao-titulo">EPIs obrigatórios</h2>
+      {% for item in itens %}{% include "liberacoes/_item.html" %}{% endfor %}
+    </section>
+    {% if respostas %}
+    <section class="secao" data-tour="checklist">
+      <h2 class="secao-titulo">Checklist da atividade</h2>
+      {% for r in respostas %}{% include "liberacoes/_pergunta.html" %}{% endfor %}
+    </section>
+    {% endif %}
+    <section class="secao" data-tour="concluir-secao">
+      <h2 class="secao-titulo">Concluir conferência</h2>
+      {% include "liberacoes/_conclusao_resumo.html" %}
+      <form method="post" action="{% url 'liberacoes:concluir' pre.pk %}" id="form-concluir">
+        {% csrf_token %}
+        <label class="caixa-marcar" data-tour="confirmar-fisico"><input type="checkbox" name="confirmou_fisico">
+          <span>Conferi fisicamente cada EPI, no local da atividade, junto com o colaborador.</span></label>
+        <div class="campo"><label for="id_obs_conclusao">Observação</label><input type="text" id="id_obs_conclusao" name="observacao" maxlength="300"></div>
+        <div class="assinaturas">
+          {% include "partials/_assinatura.html" with id="conferente" nome="assinatura_conferente" rotulo="Assinatura do técnico de segurança" quem=user.nome_exibicao %}
+          <div>
+            {% include "partials/_assinatura.html" with id="colaborador" nome="assinatura_colaborador" rotulo="Ciência do colaborador" quem=pre.trabalhador.nome %}
+            <input type="hidden" name="nome_colaborador" value="{{ pre.trabalhador.nome }}">
+          </div>
+        </div>
+        <div class="acoes">
+          <button class="btn btn-grande" type="submit" disabled data-tour="concluir">Concluir conferência</button>
+          <span class="mudo pequeno" data-falta></span>
+        </div>
+      </form>
+    </section>
+
+  {% else %}
+    {# ---------------- colaborador, almoxarifado e gestor: só acompanham ---------------- #}
+    <div style="margin-top:28px">
+    {% if do_colaborador %}
+      <div class="nota conferir" data-tour="aviso-tecnico">{% sinal "conferir" %}<p>A conferência dos seus EPIs é feita pelo <strong>técnico de segurança</strong>, no local. Leve todos os EPIs abaixo. Se algum estiver com problema, peça a troca agora.</p></div>
+    {% elif user.is_almox %}
+      <div class="nota conferir">{% sinal "conferir" %}<p>Em conferência pelo técnico de segurança. Se um EPI estiver com problema, entregue o substituto.</p></div>
+    {% endif %}
+    </div>
+    <section class="secao" data-tour="lista-itens">
+      <div class="secao-titulo"><h2>EPIs obrigatórios</h2><span class="mudo pequeno">{{ progresso.feitos }} de {{ progresso.total }} verificações feitas</span></div>
+      {% for item in itens %}{% include "liberacoes/_item.html" %}{% endfor %}
+    </section>
+  {% endif %}
+
+{% elif pre.status == "AGUARDANDO_APROVACAO" %}
+  <section class="secao" style="margin-top:32px" data-tour="resultado">
+    <div class="secao-titulo"><h2>Resultado da conferência</h2><span class="mudo pequeno">Concluída em {{ pre.conferida_em|date:"d/m/Y H:i" }}</span></div>
+    {% include "liberacoes/_tabela_itens.html" %}
+  </section>
+  <section class="secao" data-tour="assinaturas"><h2 class="secao-titulo">Assinaturas</h2>{% include "liberacoes/_assinaturas.html" %}</section>
+  {% if pode_decidir %}
+  <section class="secao" data-tour="decisao">
+    <h2 class="secao-titulo">Sua decisão</h2>
+    <p class="suave">Ao liberar, o sistema confere de novo a validade e o CA de cada EPI e grava o registro com hash.</p>
+    <form method="post" action="{% url 'liberacoes:decidir' pre.pk %}" id="form-decidir">
+      {% csrf_token %}
+      <div class="campo"><label for="id_motivo">Orientação ou motivo do bloqueio</label>
+        <textarea id="id_motivo" name="motivo" rows="2" maxlength="2000" placeholder="Obrigatório para bloquear"></textarea></div>
+      <div class="campo"><label for="id_signatario_r">Nome de quem assina</label>
+        <input type="text" id="id_signatario_r" name="signatario_nome" value="{{ user.nome_exibicao }}" required></div>
+      {% include "partials/_assinatura.html" with id="gestor" rotulo="Assinatura do gestor de SST" quem=user.nome_exibicao %}
+      <div class="acoes">
+        <button class="btn btn-sucesso btn-grande" type="submit" name="decisao" value="liberar" disabled data-tour="liberar">Liberar atividade</button>
+        <button class="btn btn-perigo btn-grande" type="submit" name="decisao" value="bloquear" disabled data-confirmar="Bloquear esta atividade? Os pedidos de reposição serão abertos.">Bloquear</button>
+      </div>
+    </form>
+  </section>
+  {% elif conferiu_esta %}
+  <div class="nota atencao">{% sinal "atencao" %}<p>Você fez esta conferência. Quem aprova é outra pessoa, da gestão de SST.</p></div>
+  {% else %}
+  <div class="nota atencao">{% sinal "atencao" %}<p>Aguardando a decisão do gestor de SST.</p></div>
+  {% endif %}
+
+{% else %}
+  {% if pre.status != "CANCELADA" %}
+  <section class="secao" style="margin-top:32px" data-tour="registro">
+    <div class="secao-titulo"><h2>Registro imutável</h2>
+      <a class="acoes-titulo nao-imprimir" href="{% url 'liberacoes:comprovante' pre.pk %}">Comprovante para imprimir</a></div>
+    {% if integridade %}
+      <p class="rotulo">{% sinal "ok" %}<span class="rotulo-texto"><strong>Integridade verificada.</strong> O hash recalculado agora confere com o gravado na decisão.</span></p>
+    {% else %}
+      <p class="rotulo">{% sinal "bloqueio" %}<span class="rotulo-texto"><strong>O hash não confere.</strong> O registro foi alterado depois da decisão.</span></p>
+    {% endif %}
+    <p class="hash">SHA-256 {{ pre.hash_sha256 }}</p>
+    <p>{{ pre.motivo }}</p>
+  </section>
+  {% else %}
+  <section class="secao" style="margin-top:32px"><h2 class="secao-titulo">Cancelada</h2><p>{{ pre.motivo }}</p></section>
+  {% endif %}
+  <section class="secao">
+    <div class="secao-titulo"><h2>Itens conferidos</h2>{% if pre.snapshot %}<span class="mudo pequeno">Como estavam no momento da decisão</span>{% endif %}</div>
+    {% include "liberacoes/_tabela_itens.html" %}
+  </section>
+  <section class="secao" data-tour="assinaturas"><h2 class="secao-titulo">Assinaturas</h2>{% include "liberacoes/_assinaturas.html" %}</section>
+{% endif %}
+
+<details class="detalhes nao-imprimir" style="margin-bottom:12px">
+  <summary>Trilha de auditoria ({{ trilha|length }})</summary>
+  <ul class="lista-simples">
+    {% for r in trilha %}
+    <li><div class="principal">{{ r.descricao|default:r.acao }}<span class="sub">{{ r.acao }}, {{ r.criado_em|date:"d/m/Y H:i:s" }}, {{ r.usuario.username|default:"sistema" }}</span></div></li>
+    {% empty %}<li class="mudo">Sem registros.</li>{% endfor %}
+  </ul>
+</details>
+
+{% if pode_cancelar %}
+<details class="detalhes nao-imprimir">
+  <summary>Cancelar esta pré-liberação</summary>
+  <form method="post" action="{% url 'liberacoes:cancelar' pre.pk %}" class="acoes" data-confirmar="Cancelar a pré-liberação? Esta ação não pode ser desfeita.">
+    {% csrf_token %}
+    <input type="text" name="motivo" required minlength="5" placeholder="Motivo, por exemplo atividade adiada por chuva" style="max-width:420px">
+    <button class="btn btn-secundario" type="submit">Cancelar</button>
+  </form>
+</details>
+{% endif %}
+{% endblock %}

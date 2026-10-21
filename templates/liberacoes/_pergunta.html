@@ -1,0 +1,26 @@
+{% load safeepi %}<div class="item" id="pergunta-{{ r.id }}" data-tour="pergunta">
+  <div class="item-cabeca">
+    {% if r.resposta is None %}{% sinal "conferir" "md" %}{% elif r.nao_conforme %}{% sinal "bloqueio" "md" %}{% elif r.resposta %}{% sinal "ok" "md" %}{% else %}{% sinal "atencao" "md" %}{% endif %}
+    <div>
+      <div class="item-nome">{{ r.item_modelo.texto }}</div>
+      <div class="item-meta">{% if r.item_modelo.bloqueante %}Se a resposta for Não, a atividade fica bloqueada{% else %}Informativa, não bloqueia{% endif %}</div>
+    </div>
+  </div>
+  {% if pode_conferir %}
+  <form method="post" action="{% url 'liberacoes:responder' pre.pk r.pk %}"
+        hx-post="{% url 'liberacoes:responder' pre.pk r.pk %}" hx-trigger="change"
+        hx-target="#pergunta-{{ r.id }}" hx-swap="outerHTML">
+    {% csrf_token %}
+    <fieldset class="segmentado dois">
+      <legend class="visualmente-oculto">{{ r.item_modelo.texto }}</legend>
+      <label class="op-sim"><input type="radio" name="valor" value="sim" {% if r.resposta %}checked{% endif %}>Sim</label>
+      <label class="op-nao"><input type="radio" name="valor" value="nao" {% if r.resposta is False %}checked{% endif %}>Não</label>
+    </fieldset>
+    <noscript><button class="btn btn-secundario btn-pequeno" type="submit">Salvar</button></noscript>
+    <span class="item-salvando">Salvando…</span>
+  </form>
+  {% if erro %}<div class="erro-inline" role="alert">{{ erro }}</div>{% endif %}
+  {% elif r.resposta is not None %}
+  <div class="pequeno suave">Resposta: <strong>{% if r.resposta %}Sim{% else %}Não{% endif %}</strong></div>
+  {% endif %}
+</div>

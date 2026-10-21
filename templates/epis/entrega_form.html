@@ -1,0 +1,51 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Entregar EPI{% endblock %}
+{% block conteudo %}
+{% if next %}<a class="voltar" href="{{ next }}">Voltar para a pré-liberação</a>{% endif %}
+<div class="cabecalho">
+  <h1>Entregar EPI</h1>
+  <p class="lead">O colaborador assina o recebimento. Numa troca, a unidade com problema sai de uso.</p>
+</div>
+{% if solicitacao %}
+<div class="nota conferir">{% sinal "conferir" %}<p>Pedido de <strong>{{ solicitacao.tipo_epi.nome }}</strong> {% ca solicitacao.tipo_epi %} para {{ solicitacao.trabalhador.nome }}, {{ solicitacao.get_motivo_display|lower }}{% if solicitacao.aguardando_no_local %}. O colaborador está aguardando no local{% endif %}.</p></div>
+{% endif %}
+{% if form.non_field_errors %}<div class="nota bloqueio">{% sinal "bloqueio" %}<p>{{ form.non_field_errors|join:" " }}</p></div>{% endif %}
+<form method="post" id="form-entrega">
+  {% csrf_token %}
+  {% if solicitacao %}<input type="hidden" name="solicitacao" value="{{ solicitacao.pk }}">{% endif %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <section class="secao">
+    <div class="grade-2" style="gap:0 32px">
+      <div class="campo">
+        <label for="{{ form.trabalhador.id_for_label }}">Colaborador</label>{{ form.trabalhador }}
+        {% for e in form.trabalhador.errors %}<div class="erro-campo">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="campo">
+        <label for="{{ form.tipo.id_for_label }}">Tipo de EPI</label>
+        <select name="tipo" id="{{ form.tipo.id_for_label }}" hx-get="{% url 'epis:opcoes_unidades' %}" hx-target="#id_unidade" hx-trigger="change">
+          <option value="">Todos os tipos</option>
+          {% for t in form.fields.tipo.queryset %}<option value="{{ t.pk }}" {% if form.tipo.value|stringformat:"s" == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }} (CA {{ t.numero_ca }})</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo" data-tour="unidade">
+        <label for="id_unidade">Unidade a entregar</label>
+        <select name="unidade" id="id_unidade" required>
+          <option value="">Escolha a unidade</option>
+          {% for u in form.fields.unidade.queryset %}<option value="{{ u.pk }}" {% if form.unidade.value|stringformat:"s" == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.codigo }}, {{ u.tipo.nome }}, CA {{ u.tipo.numero_ca }}{% if u.tamanho %}, tam. {{ u.tamanho }}{% endif %}{% if u.validade %}, val. {{ u.validade|date:"d/m/Y" }}{% endif %}</option>{% endfor %}
+        </select>
+        {% for e in form.unidade.errors %}<div class="erro-campo">{{ e }}</div>{% endfor %}
+        <div class="ajuda">Só aparecem unidades em estoque, dentro da validade e com CA vigente.</div>
+      </div>
+      <div class="campo"><label for="{{ form.motivo.id_for_label }}">Motivo</label>{{ form.motivo }}</div>
+    </div>
+    <div class="campo"><label for="{{ form.observacao.id_for_label }}">Observação</label>{{ form.observacao }}</div>
+  </section>
+  <section class="secao">
+    <h2 class="secao-titulo">Recebimento</h2>
+    <div class="campo"><label for="{{ form.signatario_nome.id_for_label }}">Nome de quem recebe</label>{{ form.signatario_nome }}</div>
+    {% include "partials/_assinatura.html" with id="entrega" rotulo="Assinatura do colaborador" %}
+    {% for e in form.assinatura.errors %}<div class="erro-campo">{{ e }}</div>{% endfor %}
+  </section>
+  <button class="btn btn-grande" type="submit" disabled data-tour="registrar-entrega">Registrar entrega</button>
+</form>
+{% endblock %}

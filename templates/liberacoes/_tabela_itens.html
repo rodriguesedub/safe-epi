@@ -1,0 +1,26 @@
+{% load safeepi %}<div class="rolagem" data-tour="tabela-itens">
+<table class="tabela">
+  <thead><tr><th>EPI</th><th>CA</th><th>Unidade</th><th>Validade</th><th>Validação automática</th><th>Conferência física</th></tr></thead>
+  <tbody>
+  {% for l in linhas %}
+  <tr>
+    <td><span class="rotulo">{% sinal l.sinal %}<span class="rotulo-texto">{{ l.tipo }}</span></span></td>
+    <td>{% ca l.ca l.validade_ca %}</td>
+    <td>{% if l.unidade %}<span class="codigo">{{ l.unidade }}</span>{% else %}—{% endif %}</td>
+    <td class="data">{{ l.validade|date:"d/m/Y"|default:"—" }}</td>
+    <td>{{ l.auto }}{% if l.auto != "Válido" %}<span class="sub">{{ l.motivo_auto }}</span>{% endif %}</td>
+    <td>{{ l.fisico }}{% if l.observacao %}<span class="sub">{{ l.observacao }}</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if checklist %}
+<h3 style="margin:28px 0 10px">Checklist da atividade</h3>
+<ul class="lista-simples">
+  {% for c in checklist %}
+  <li>{% if c.resposta is None %}{% sinal "conferir" %}{% elif c.resposta %}{% sinal "ok" %}{% elif c.bloqueante %}{% sinal "bloqueio" %}{% else %}{% sinal "atencao" %}{% endif %}
+    <div class="principal">{{ c.pergunta }}<span class="sub">{% if c.resposta is None %}Sem resposta{% elif c.resposta %}Sim{% else %}Não{% endif %}{% if c.observacao %}. {{ c.observacao }}{% endif %}</span></div></li>
+  {% endfor %}
+</ul>
+{% endif %}

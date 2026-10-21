@@ -1,0 +1,7 @@
+{% load safeepi %}{% if messages %}
+<div class="avisos" role="status">
+  {% for m in messages %}
+  <div class="aviso aviso-{{ m.tags }}"><span>{{ m }}</span></div>
+  {% endfor %}
+</div>
+{% endif %}

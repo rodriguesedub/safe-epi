@@ -1,0 +1,75 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Painel de SST{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>Painel de SST</h1><p class="lead">Últimos {{ k.dias }} dias.</p></div>
+  <div class="acoes"><a class="btn btn-secundario" href="{% url 'relatorios:estatisticas' %}" data-tour="ir-estatisticas">Estatísticas de EPI</a><a class="btn btn-secundario" href="{% url 'relatorios:busca' %}">Colaboradores</a></div>
+</div>
+
+<div class="figuras">
+  <div>
+    <div class="figura-rotulo">Tempo mediano até liberar</div>
+    <div class="figura-valor">{{ k.t_aprovacao|minutos }}<small>min</small></div>
+    <div class="figura-nota">Com aprovação. Em modo registro, {{ k.t_registro|minutos }} min. Antes, de 15 a 45 min.</div>
+  </div>
+  <div>
+    <div class="figura-rotulo">Pré-liberações decididas</div>
+    <div class="figura-valor">{{ k.n_decididas }}</div>
+    <div class="figura-nota">{{ k.n_bloqueadas }} bloqueada{{ k.n_bloqueadas|pluralize }} ({{ k.pct_bloqueio|pct }})</div>
+  </div>
+  <div>
+    <div class="figura-rotulo">Aguardando sua aprovação</div>
+    <div class="figura-valor">{{ k.aguardando }}</div>
+    <div class="figura-nota">{{ k.em_conferencia }} em conferência agora</div>
+  </div>
+  <div>
+    <div class="figura-rotulo">EPIs vencidos em uso</div>
+    <div class="figura-valor{% if k.vencidos_em_uso %} bad{% endif %}">{{ k.vencidos_em_uso }}</div>
+    <div class="figura-nota">{{ k.alertas_abertos }} alertas abertos</div>
+  </div>
+</div>
+
+<div class="grade-2">
+  <section class="secao" data-tour="aguardando">
+    <div class="secao-titulo"><h2>Aguardando aprovação</h2><a class="acoes-titulo" href="{% url 'liberacoes:lista' %}?aba=aguardando">Ver todas</a></div>
+    <ul class="lista-simples">
+      {% for p in aguardando %}
+      <li data-pre="{{ p.pk }}">{% sinal "atencao" %}<div class="principal"><span class="forte">{{ p.trabalhador.nome }}</span><span class="sub">{{ p.atividade.nome }}, {{ p.local }}</span><span class="sub">Conferida por {{ p.conferida_por.nome_exibicao|default:"—" }} às {{ p.conferida_em|date:"H:i" }}</span></div>
+        <a class="btn btn-pequeno lado" href="{% url 'liberacoes:detalhe' p.pk %}" data-tour="decidir">Decidir</a></li>
+      {% empty %}<li class="mudo">Nada aguardando.</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="secao">
+    <div class="secao-titulo"><h2>Vencimentos próximos</h2><a class="acoes-titulo" href="{% url 'alertas:painel' %}">Ver todos</a></div>
+    <ul class="lista-simples">
+      {% for a in alertas %}
+      <li>{% sinal a|sinal_alerta %}<div class="principal">{% if a.unidade %}{{ a.unidade.tipo.nome }} {% ca a.unidade.tipo %}<span class="sub"><a class="codigo" style="font-weight:500" href="{% url 'epis:unidade' a.unidade.codigo %}">{{ a.unidade.codigo }}</a>, {{ a.get_tipo_display|lower }} em {{ a.vence_em|date:"d/m/Y" }}</span>{% else %}{{ a.tipo_epi.nome }} {% ca a.tipo_epi %}<span class="sub">{{ a.get_tipo_display }} em {{ a.vence_em|date:"d/m/Y" }}</span>{% endif %}</div></li>
+      {% empty %}<li class="mudo">Nada vencendo nos próximos 30 dias.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+
+<section class="secao">
+  <h2 class="secao-titulo">Por que as atividades foram bloqueadas</h2>
+  {% if motivos %}
+  <div class="barras">
+    {% for m, n, largura in motivos %}
+    <div class="barra" title="{{ m }}: {{ n }}"><span class="barra-nome">{{ m }}</span><span class="barra-trilho"><span class="barra-valor" style="width:{{ largura }}%"></span></span><span class="barra-n">{{ n }}</span></div>
+    {% endfor %}
+  </div>
+  <p class="grafico-nota">Itens não conformes nas pré-liberações bloqueadas do período.</p>
+  {% else %}<p class="mudo">Nenhum bloqueio no período.</p>{% endif %}
+</section>
+
+<details class="detalhes">
+  <summary>Indicadores do MVP (K1 a K10)</summary>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>ID</th><th>Indicador</th><th>Valor atual</th><th>Meta</th></tr></thead>
+    <tbody>
+    {% for id, nome, valor, meta, situacao in indicadores %}
+    <tr><td>{{ id }}</td><td>{{ nome }}</td><td><span class="rotulo">{% sinal situacao %}<span class="rotulo-texto forte">{{ valor }}</span></span></td><td>{{ meta }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</details>
+{% endblock %}

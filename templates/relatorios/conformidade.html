@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Relatório de conformidade{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>Relatório de conformidade</h1><p class="lead">Pré-liberações finalizadas no período, com o hash de cada registro. Gerado em {{ gerado_em|date:"d/m/Y H:i" }}.</p></div>
+  <div class="acoes nao-imprimir"><a class="btn" href="?{{ query }}{% if query %}&{% endif %}formato=csv">Baixar CSV</a><button class="btn btn-secundario" type="button" onclick="window.print()">Imprimir</button></div>
+</div>
+<form method="get" class="filtros nao-imprimir">
+  <div class="campo"><label for="f_ini">De</label><input type="date" id="f_ini" name="inicio" value="{{ f.inicio }}"></div>
+  <div class="campo"><label for="f_fim">Até</label><input type="date" id="f_fim" name="fim" value="{{ f.fim }}"></div>
+  <div class="campo"><label for="f_ativ">Atividade</label><select id="f_ativ" name="atividade"><option value="">Todas</option>{% for a in atividades %}<option value="{{ a.pk }}" {% if f.atividade == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.nome }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="f_trab">Colaborador</label><input type="search" id="f_trab" name="trabalhador" value="{{ f.trabalhador }}" placeholder="Nome ou matrícula"></div>
+  <div class="campo"><button class="btn btn-secundario" type="submit">Aplicar</button></div>
+</form>
+<p><strong>{{ resumo.total }}</strong> pré-liberações: {{ resumo.liberadas }} liberadas, {{ resumo.bloqueadas }} bloqueadas, {{ resumo.canceladas }} canceladas.</p>
+<div class="rolagem"><table class="tabela">
+  <thead><tr><th>Número</th><th>Situação</th><th>Atividade</th><th>Colaborador</th><th>Conferida por</th><th class="num">Data</th><th class="num">Tempo</th><th>Hash</th></tr></thead>
+  <tbody>{% for p in pres %}
+    <tr><td><a href="{% url 'liberacoes:detalhe' p.pk %}">{{ p.numero }}</a></td>
+    <td><span class="rotulo">{% sinal p.status|sinal_pre %}<span class="rotulo-texto">{{ p.get_status_display }}</span></span></td>
+    <td>{{ p.atividade.nome }}</td><td>{{ p.trabalhador.nome }}</td><td>{{ p.conferida_por.nome_exibicao|default:"—" }}</td>
+    <td class="num">{{ p.aberta_em|date:"d/m/Y H:i" }}</td><td class="num">{{ p.duracao|duracao }}</td>
+    <td class="hash">{{ p.hash_sha256|slice:":12"|default:"—" }}</td></tr>
+  {% empty %}<tr><td colspan="8" class="mudo">Nada no período.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

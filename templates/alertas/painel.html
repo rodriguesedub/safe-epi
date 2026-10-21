@@ -1,0 +1,41 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Alertas{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>Alertas de vencimento</h1><p class="lead">Avisos com 30, 15 e 7 dias de antecedência, para validade do EPI, do CA e vida útil.</p></div>
+  <form method="post" action="{% url 'alertas:executar' %}">{% csrf_token %}<button class="btn btn-secundario" type="submit">Verificar agora</button></form>
+</div>
+<nav class="abas" aria-label="Filtrar por prazo">
+  <a href="?" class="{% if faixa == '' and not tipo %}atual{% endif %}">Todos</a>
+  <a href="?faixa=0" class="{% if faixa == '0' %}atual{% endif %}">Vencidos <span class="n">{{ contagem.0 }}</span></a>
+  <a href="?faixa=7" class="{% if faixa == '7' %}atual{% endif %}">Até 7 dias <span class="n">{{ contagem.7 }}</span></a>
+  <a href="?faixa=15" class="{% if faixa == '15' %}atual{% endif %}">Até 15 dias <span class="n">{{ contagem.15 }}</span></a>
+  <a href="?faixa=30" class="{% if faixa == '30' %}atual{% endif %}">Até 30 dias <span class="n">{{ contagem.30 }}</span></a>
+</nav>
+{% if linhas %}
+<div class="rolagem"><table class="tabela">
+  <thead><tr><th>Prazo</th><th class="num">Vence em</th><th>O quê</th><th>EPI</th><th>CA</th><th>Com</th><th></th></tr></thead>
+  <tbody>
+  {% for a, t in linhas %}
+  <tr>
+    <td><span class="rotulo">{% sinal a|sinal_alerta %}<span class="rotulo-texto">{{ a.faixa_label }}</span></span></td>
+    <td class="num">{{ a.vence_em|date:"d/m/Y" }}<span class="sub">{% if a.dias_restantes < 0 %}há {{ a.dias_restantes|stringformat:"d"|slice:"1:" }} dias{% elif a.dias_restantes == 0 %}hoje{% else %}em {{ a.dias_restantes }} dias{% endif %}</span></td>
+    <td>{{ a.get_tipo_display }}</td>
+    <td>{% if a.unidade %}{{ a.unidade.tipo.nome }}<span class="sub"><a class="codigo" style="font-weight:500" href="{% url 'epis:unidade' a.unidade.codigo %}">{{ a.unidade.codigo }}</a></span>{% else %}Todas as unidades de {{ a.tipo_epi.nome }}{% endif %}</td>
+    <td>{% if a.unidade %}{% ca a.unidade.tipo %}{% else %}{% ca a.tipo_epi %}{% endif %}</td>
+    <td>{% if t %}<a href="{% url 'relatorios:trabalhador' t.pk %}">{{ t.nome }}</a>{% elif a.unidade %}Estoque{% else %}—{% endif %}</td>
+    <td>{% if t and a.unidade %}<a class="btn btn-secundario btn-pequeno" href="{% url 'epis:entrega_nova' %}?trabalhador={{ t.pk }}&tipo={{ a.unidade.tipo_id }}">Trocar</a>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}<div class="vazio"><p>Nenhum alerta com esse filtro.</p></div>{% endif %}
+<section class="secao" style="margin-top:44px">
+  <div class="secao-titulo"><h2>Para planejar compras</h2><a class="acoes-titulo" href="{% url 'alertas:compras_csv' %}">Baixar CSV</a></div>
+  <p class="suave pequeno">Unidades que vencem nos próximos 30 dias, por tipo e tamanho.</p>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>Tipo de EPI</th><th>Tamanho</th><th class="num">Unidades</th></tr></thead>
+    <tbody>{% for tipo_nome, tam, n in compras %}<tr><td>{{ tipo_nome }}</td><td>{{ tam }}</td><td class="num">{{ n }}</td></tr>{% empty %}<tr><td colspan="3" class="mudo">Nada vence nos próximos 30 dias.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

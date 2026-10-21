@@ -1,0 +1,41 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Reposições{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Reposições</h1>
+  <p class="lead">Quem está aguardando no local vem primeiro.</p>
+</div>
+<nav class="abas" aria-label="Situação dos pedidos">
+  <a href="?aba=abertas" class="{% if aba == 'abertas' %}atual{% endif %}">Abertas <span class="n">{{ contagens.abertas }}</span></a>
+  <a href="?aba=atendidas" class="{% if aba == 'atendidas' %}atual{% endif %}">Atendidas <span class="n">{{ contagens.atendidas }}</span></a>
+  <a href="?aba=recusadas" class="{% if aba == 'recusadas' %}atual{% endif %}">Recusadas <span class="n">{{ contagens.recusadas }}</span></a>
+</nav>
+{% if pedidos %}
+<ul class="lista-simples">
+{% for s in pedidos %}
+  <li{% if s.pre_liberacao_id %} data-sol-pre="{{ s.pre_liberacao_id }}"{% endif %}>
+    {% if s.status == "ABERTA" %}{% if s.bloqueando %}{% sinal "bloqueio" "md" %}{% else %}{% sinal "atencao" "md" %}{% endif %}{% elif s.status == "ATENDIDA" %}{% sinal "ok" "md" %}{% else %}{% sinal "neutro" "md" %}{% endif %}
+    <div class="principal">
+      <span class="forte">{{ s.tipo_epi.nome }}</span> {% ca s.tipo_epi %} <span class="suave">para <a href="{% url 'relatorios:trabalhador' s.trabalhador_id %}">{{ s.trabalhador.nome }}</a></span>
+      <span class="sub">{% if s.aguardando_no_local %}<span style="color:var(--bad)">Aguardando no local, <a href="{% url 'liberacoes:detalhe' s.pre_liberacao_id %}">{{ s.pre_liberacao.numero }}</a>.</span> {% elif s.bloqueando %}Bloqueou a <a href="{% url 'liberacoes:detalhe' s.pre_liberacao_id %}">{{ s.pre_liberacao.numero }}</a>. {% endif %}{{ s.get_motivo_display }}{% if s.unidade_substituida %}, substitui <span class="codigo" style="font-weight:500">{{ s.unidade_substituida.codigo }}</span>{% endif %}, {{ s.criada_em|date:"d/m/Y H:i" }}.</span>
+      {% if s.observacao %}<span class="sub">{{ s.observacao }}</span>{% endif %}
+      {% if s.foto %}<a href="{{ s.foto.url }}" target="_blank" rel="noopener"><img class="foto-miniatura" src="{{ s.foto.url }}" alt="Foto do EPI"></a>{% endif %}
+      {% if s.status == "ATENDIDA" %}<span class="sub">Atendida em {{ s.atendida_em|date:"d/m/Y H:i" }}{% if s.entrega %} com <span class="codigo" style="font-weight:500">{{ s.entrega.unidade.codigo }}</span>{% endif %}.</span>{% endif %}
+      {% if s.status == "RECUSADA" %}<span class="sub">Recusada: {{ s.resposta }}</span>{% endif %}
+      {% if s.status == "ABERTA" %}
+      <details class="detalhes"><summary>Recusar</summary>
+        <form method="post" action="{% url 'reposicao:recusar' s.pk %}" class="acoes">{% csrf_token %}
+          <input type="text" name="resposta" required minlength="5" placeholder="Motivo da recusa" style="max-width:340px">
+          <button class="btn btn-secundario btn-pequeno" type="submit">Recusar pedido</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+    {% if s.status == "ABERTA" %}<a class="btn btn-pequeno lado" data-tour="atender" href="{% url 'epis:entrega_nova' %}?solicitacao={{ s.pk }}{% if s.pre_liberacao_id %}&next={% url 'liberacoes:detalhe' s.pre_liberacao_id %}{% endif %}">Atender</a>{% endif %}
+  </li>
+{% endfor %}
+</ul>
+{% else %}
+<div class="vazio"><p>Nenhum pedido nesta situação.</p></div>
+{% endif %}
+{% endblock %}

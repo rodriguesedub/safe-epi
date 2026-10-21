@@ -1,0 +1,223 @@
+/* SAFEEPI, tutorial animado.
+   Balões que apontam para a tela, destaque do elemento, cursor da reprodução automática,
+   cartões de cena e o palco com moldura de celular para quem trabalha em campo.
+   Só é carregado no modo de demonstração. */
+
+:root {
+  --tour-escurecer: rgba(15, 20, 28, .48);
+  --tour-palco: #EEF0F3;
+  --tour-sombra: 0 14px 40px rgba(15, 20, 28, .18), 0 0 0 1px rgba(15, 20, 28, .06);
+}
+
+/* ------------------------------------------------ revelação suave a cada página do tour */
+html.tour-ativo body::after {
+  content: ""; position: fixed; inset: 0; z-index: 2000; pointer-events: none;
+  background: var(--bg, #fff);
+  animation: tour-revelar .3s ease-out 1.6s forwards;   /* se o script falhar, some sozinho */
+}
+html.tour-ativo.tour-pronto body::after {
+  animation: none; opacity: 0; visibility: hidden;
+  transition: opacity .32s ease-out, visibility 0s linear .32s;
+}
+@keyframes tour-revelar { to { opacity: 0; visibility: hidden; } }
+
+html.tour-ativo .demo { display: none; }
+
+/* ------------------------------------------------ palco: colaborador e técnico no celular */
+.palco-legenda { display: none; }
+@media (min-width: 900px) and (min-height: 560px) {
+  html.tour-ativo body[data-campo] { background: var(--tour-palco); overflow: hidden; }
+  html.tour-ativo body[data-campo]::after { background: var(--tour-palco); }
+  html.tour-ativo body[data-campo] .app {
+    position: fixed; z-index: 1;
+    width: 390px; height: min(820px, calc(100vh - 64px));
+    top: max(32px, calc((100vh - 820px) / 2));
+    left: max(300px, calc(38% - 195px));
+    min-height: 0; padding-top: 22px;
+    overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+    border-radius: 42px;
+    box-shadow: 0 0 0 10px #15191F, 0 0 0 11px #3B424C, 0 40px 90px rgba(15, 20, 28, .26);
+    scrollbar-width: none;
+  }
+  html.tour-ativo body[data-campo] .app::-webkit-scrollbar { display: none; }
+  html.tour-ativo body[data-campo] .progresso { padding-top: 18px; }
+  html.tour-ativo body[data-campo] .palco-legenda {
+    display: flex; position: fixed; z-index: 1001; top: 50%; transform: translateY(-50%);
+    left: max(32px, calc(38% - 195px - 290px)); width: 240px;
+    flex-direction: column; gap: 10px; color: var(--ink-2, #4B5360);
+  }
+}
+.palco-legenda .avatar { width: 52px; height: 52px; font-size: 18px; background: #fff; color: var(--ink, #15191F); box-shadow: 0 0 0 1px var(--line, #E7E9EC); }
+.palco-legenda strong { display: block; font-size: 20px; line-height: 1.25; color: var(--ink, #15191F); font-weight: 600; }
+.palco-legenda span { font-size: 15px; line-height: 1.4; }
+.palco-legenda .aparelho { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-3, #737B87); }
+.palco-legenda .aparelho svg { width: 14px; height: 14px; }
+
+/* ------------------------------------------------ destaque e bloqueio de cliques */
+.tour-destaque {
+  position: fixed; z-index: 1000; pointer-events: none; border-radius: 10px;
+  box-shadow: 0 0 0 3px rgba(19, 75, 138, .5), 0 0 0 9999px var(--tour-escurecer);
+  opacity: 0; transition: opacity .25s ease-out;
+}
+.tour-destaque.visivel { opacity: 1; }
+.tour-destaque.sem-alvo { box-shadow: 0 0 0 9999px var(--tour-escurecer); width: 0 !important; height: 0 !important; left: 50% !important; top: 50% !important; }
+.tour-destaque.movendo { transition: opacity .25s ease-out, left .38s cubic-bezier(.2, .7, .2, 1), top .38s cubic-bezier(.2, .7, .2, 1), width .38s cubic-bezier(.2, .7, .2, 1), height .38s cubic-bezier(.2, .7, .2, 1); }
+.tour-bloqueio { position: fixed; z-index: 999; background: transparent; }
+
+/* ------------------------------------------------ balão */
+.tour-balao {
+  position: fixed; z-index: 1001; width: 344px; max-width: calc(100vw - 32px);
+  background: #fff; color: var(--ink, #15191F); border-radius: 12px; box-shadow: var(--tour-sombra);
+  padding: 16px 18px 14px; font: 400 15.5px/1.5 var(--fonte, system-ui, sans-serif);
+  opacity: 0; transform: translateY(4px);
+  transition: opacity .2s ease-out, transform .2s ease-out;
+}
+.tour-balao.visivel { opacity: 1; transform: none; }
+.tour-balao.movendo { transition: opacity .2s ease-out, transform .2s ease-out, left .38s cubic-bezier(.2, .7, .2, 1), top .38s cubic-bezier(.2, .7, .2, 1); }
+.tour-balao::before {
+  content: ""; position: absolute; width: 12px; height: 12px; background: #fff; transform: rotate(45deg);
+  box-shadow: -1px -1px 0 rgba(15, 20, 28, .06); display: none;
+}
+.tour-balao.seta-cima::before { display: block; top: -6px; left: calc(var(--seta, 50%) - 6px); }
+.tour-balao.seta-baixo::before { display: block; bottom: -6px; left: calc(var(--seta, 50%) - 6px); box-shadow: 1px 1px 0 rgba(15, 20, 28, .06); }
+.tour-balao.seta-esquerda::before { display: block; left: -6px; top: calc(var(--seta, 50%) - 6px); }
+.tour-balao.seta-direita::before { display: block; right: -6px; top: calc(var(--seta, 50%) - 6px); box-shadow: 1px -1px 0 rgba(15, 20, 28, .06); }
+.tour-balao-topo { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--ink-3, #737B87); }
+.tour-balao-topo .avatar { width: 24px; height: 24px; font-size: 10.5px; }
+.tour-balao-topo .quem { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tour-balao-topo .quem b { color: var(--ink-2, #4B5360); font-weight: 600; }
+.tour-balao-topo .passo { font-variant-numeric: tabular-nums; }
+.tour-balao h2 { font-size: 17px; line-height: 1.3; margin: 0 0 4px; font-weight: 600; letter-spacing: 0; }
+.tour-balao h2 .contagem-item { font-size: 13.5px; font-weight: 500; color: var(--ink-3, #737B87); margin-left: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tour-balao p { margin: 0; color: var(--ink-2, #4B5360); }
+.tour-balao p + p { margin-top: 6px; }
+.tour-balao .tour-faca { margin-top: 10px; display: flex; gap: 8px; align-items: flex-start; color: var(--accent, #134B8A); font-weight: 500; font-size: 14.5px; }
+.tour-balao .tour-faca svg { flex: none; width: 16px; height: 16px; margin-top: 3px; }
+.tour-balao-acoes { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.tour-balao-acoes .espaco { flex: 1; }
+.tour-balao-acoes button {
+  font: 500 14px/1 var(--fonte, system-ui, sans-serif); border-radius: 8px; padding: 9px 13px; cursor: pointer;
+  border: 1px solid var(--line-2, #CFD4DA); background: #fff; color: var(--ink, #15191F); min-height: 36px; white-space: nowrap;
+}
+.tour-balao-acoes button:hover { border-color: var(--ink-3, #737B87); }
+.tour-balao-acoes button.primario { background: var(--accent, #134B8A); border-color: var(--accent, #134B8A); color: #fff; }
+.tour-balao-acoes button.primario:hover { background: var(--accent-2, #0E3A6C); }
+.tour-balao-acoes button:disabled { opacity: .45; cursor: default; }
+.tour-balao-acoes button.texto { border-color: transparent; color: var(--ink-3, #737B87); padding-left: 2px; padding-right: 2px; }
+.tour-balao-acoes button.texto:hover { color: var(--ink, #15191F); }
+.tour-tempo { position: absolute; left: 14px; right: 14px; bottom: 7px; height: 2px; border-radius: 1px; background: var(--line, #E7E9EC); overflow: hidden; }
+.tour-tempo i { display: block; height: 100%; width: 0; background: var(--accent, #134B8A); }
+.tour-balao.automatico { padding-bottom: 20px; }
+
+/* celular de verdade (tour guiado no telefone): balão vira uma folha no rodapé */
+.tour-balao.folha { left: 8px !important; right: 8px; top: auto !important; bottom: 8px; width: auto; max-width: none; }
+.tour-balao.folha::before { display: none; }
+@media (max-width: 639px) {
+  /* espaço para rolar o fim da página para cima da folha */
+  html.tour-ativo main { padding-bottom: 62vh; }
+}
+
+/* ------------------------------------------------ cursor da reprodução automática */
+.tour-cursor {
+  position: fixed; z-index: 1003; left: 0; top: 0; width: 26px; height: 26px; pointer-events: none;
+  transform: translate(-100px, -100px); will-change: transform;
+  filter: drop-shadow(0 2px 3px rgba(15, 20, 28, .35));
+}
+.tour-cursor svg { width: 26px; height: 26px; display: block; transition: transform .12s ease-out; transform-origin: 3px 2px; }
+.tour-cursor.pressionado svg { transform: scale(.86); }
+.tour-cursor.caneta svg { transform: rotate(-12deg); }
+.tour-clique {
+  position: fixed; z-index: 1002; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  border: 2px solid rgba(19, 75, 138, .75); background: rgba(19, 75, 138, .12); pointer-events: none;
+  animation: tour-clique .5s ease-out forwards;
+}
+@keyframes tour-clique { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.15); opacity: 0; } }
+
+/* lista que imita o menu de opções aberto (o menu nativo não abre por script) */
+.tour-lista {
+  position: fixed; z-index: 1001; background: #fff; border: 1px solid var(--line-2, #CFD4DA); border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 20, 28, .14); padding: 4px; font-size: 14.5px;
+}
+.tour-lista div { padding: 8px 10px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink, #15191F); }
+.tour-lista div.atual { background: var(--accent, #134B8A); color: #fff; }
+.tour-escolhido { box-shadow: 0 0 0 3px rgba(19, 75, 138, .28); transition: box-shadow .3s; }
+
+/* rolagem deixa espaço para a barra de progresso fixa */
+html.tour-ativo [data-tour], html.tour-ativo .item { scroll-margin-top: 92px; scroll-margin-bottom: 96px; }
+
+/* reprodução automática: o mouse de verdade some até ser mexido */
+html.tour-auto .tour-bloqueio { cursor: none; }
+html.tour-auto.tour-mouse .tour-bloqueio { cursor: default; }
+
+/* ------------------------------------------------ cenas, abertura, contagem e fim */
+.tour-cena {
+  position: fixed; inset: 0; z-index: 1100; background: #fff; display: grid; place-items: center;
+  padding: 32px 20px; opacity: 0; transition: opacity .3s ease-out; overflow-y: auto;
+}
+.tour-cena.visivel { opacity: 1; }
+.tour-cena-caixa { width: 100%; max-width: 560px; text-align: center; }
+.tour-cena-rotulo { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3, #737B87); margin-bottom: 18px; }
+.tour-cena .avatar.grande { width: 72px; height: 72px; font-size: 24px; margin: 0 auto 14px; display: flex; background: var(--bg-2, #F5F6F7); color: var(--ink, #15191F); }
+.tour-cena h1 { font-size: 32px; line-height: 1.15; margin: 0 0 6px; }
+.tour-cena .papel { font-size: 16px; color: var(--ink-3, #737B87); margin: 0 0 18px; display: inline-flex; align-items: center; gap: 8px; }
+.tour-cena .papel svg { width: 16px; height: 16px; }
+.tour-cena .texto { font-size: 19px; line-height: 1.5; color: var(--ink-2, #4B5360); margin: 0 auto; max-width: 46ch; }
+.tour-cena .acoes-cena { margin-top: 28px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.tour-cena-tempo { width: 160px; height: 3px; border-radius: 2px; background: var(--line, #E7E9EC); margin: 30px auto 0; overflow: hidden; }
+.tour-cena-tempo i { display: block; height: 100%; width: 0; background: var(--ink, #15191F); }
+.tour-elenco {
+  position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(640px, 92vw); margin: 34px 0 0 50%; transform: translateX(-50%); padding: 0; list-style: none;
+}
+.tour-elenco::before { content: ""; position: absolute; top: 22px; left: 12.5%; right: 12.5%; height: 1px; background: var(--line-2, #CFD4DA); }
+.tour-elenco li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 6px; }
+.tour-elenco .avatar { width: 44px; height: 44px; font-size: 15px; background: #fff; color: var(--ink, #15191F); box-shadow: 0 0 0 1px var(--line-2, #CFD4DA); margin-bottom: 8px; }
+.tour-elenco b { font-size: 16px; font-weight: 600; color: var(--ink, #15191F); }
+.tour-elenco small { font-size: 13.5px; color: var(--ink-3, #737B87); line-height: 1.3; }
+.tour-contagem { font-size: 88px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; margin-top: 26px; color: var(--ink, #15191F); }
+.tour-dica { font-size: 13.5px; color: var(--ink-3, #737B87); margin-top: 14px; }
+.tour-dica kbd { font: 600 12px/1 var(--fonte, system-ui, sans-serif); padding: 3px 6px; border: 1px solid var(--line-2, #CFD4DA); border-bottom-width: 2px; border-radius: 4px; color: var(--ink-2, #4B5360); }
+.tour-resumo { list-style: none; padding: 0; margin: 22px auto 0; max-width: 420px; text-align: left; }
+.tour-resumo li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid var(--line, #E7E9EC); font-size: 16px; color: var(--ink-2, #4B5360); }
+.tour-resumo li:last-child { border-bottom: 1px solid var(--line, #E7E9EC); }
+.tour-resumo svg { flex: none; width: 18px; height: 18px; margin-top: 3px; }
+.tour-frase { font-size: 22px; font-weight: 600; color: var(--ink, #15191F); margin: 26px 0 0; }
+
+/* ------------------------------------------------ controles da reprodução automática */
+.tour-controles {
+  position: fixed; z-index: 1004; left: 50%; bottom: 18px; transform: translate(-50%, 8px);
+  display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 22px;
+  background: rgba(21, 25, 31, .92); color: #fff; font-size: 13.5px;
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.tour-controles.visivel { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.tour-controles button { font: 500 13.5px/1 var(--fonte, system-ui, sans-serif); color: #fff; background: none; border: 0; border-radius: 16px; padding: 8px 12px; cursor: pointer; }
+.tour-controles button:hover { background: rgba(255, 255, 255, .12); }
+.tour-controles .info { padding: 0 10px; color: rgba(255, 255, 255, .6); font-variant-numeric: tabular-nums; }
+.tour-pausado {
+  position: fixed; z-index: 1004; top: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--ink, #15191F); color: #fff; border-radius: 18px; padding: 7px 14px; font-size: 13.5px; font-weight: 500;
+}
+
+/* ------------------------------------------------ preparando os dados */
+.tour-preparando {
+  position: fixed; inset: 0; z-index: 2100; background: #fff; display: grid; place-items: center; text-align: center;
+  font-size: 17px; color: var(--ink-2, #4B5360);
+}
+.tour-preparando .giro { width: 28px; height: 28px; margin: 0 auto 14px; border-radius: 50%; border: 3px solid var(--line, #E7E9EC); border-top-color: var(--accent, #134B8A); animation: tour-giro .8s linear infinite; }
+@keyframes tour-giro { to { transform: rotate(360deg); } }
+
+/* ------------------------------------------------ entrada do tutorial no login */
+.login-tour { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line, #E7E9EC); }
+.login-tour h2 { font-size: 15px; margin: 0 0 4px; }
+.login-tour p { font-size: 14px; color: var(--ink-2, #4B5360); margin: 0 0 12px; }
+.login-tour .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.login-tour form { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-destaque.movendo, .tour-balao.movendo, .tour-balao, .tour-cena { transition: none; }
+  .tour-clique { animation-duration: .01s; }
+}
+@media print {
+  .tour-destaque, .tour-bloqueio, .tour-balao, .tour-cursor, .tour-cena, .tour-controles { display: none !important; }
+}

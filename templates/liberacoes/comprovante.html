@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Comprovante {{ pre.numero }}{% endblock %}
+{% block conteudo %}
+<div class="acoes nao-imprimir" style="margin-bottom:24px">
+  <a class="btn btn-secundario" href="{% url 'liberacoes:detalhe' pre.pk %}">Voltar</a>
+  <button class="btn" type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+</div>
+<p class="mudo pequeno">Comprovante de pré-liberação gerado a partir do registro imutável.</p>
+{% include "liberacoes/_estado.html" %}
+{% include "liberacoes/_fatos.html" %}
+<section class="secao" style="margin-top:28px"><h2 class="secao-titulo">Itens</h2>{% include "liberacoes/_tabela_itens.html" %}</section>
+<section class="secao"><h2 class="secao-titulo">Assinaturas</h2>{% include "liberacoes/_assinaturas.html" %}</section>
+<section class="secao"><h2 class="secao-titulo">Decisão</h2><p>{{ pre.motivo|default:"—" }}</p>
+  <p class="hash">SHA-256 {{ pre.hash_sha256|default:"—" }}<br>Integridade: {% if integridade %}confere{% elif integridade is None %}sem registro{% else %}não confere{% endif %}</p></section>
+{% endblock %}

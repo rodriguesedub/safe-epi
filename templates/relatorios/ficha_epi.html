@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Ficha de EPI de {{ t.nome }}{% endblock %}
+{% block conteudo %}
+<div class="acoes nao-imprimir" style="margin-bottom:28px">
+  <a class="btn btn-secundario" href="{% url 'relatorios:trabalhador' t.pk %}">Voltar</a>
+  <button class="btn" type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+</div>
+<h1>Ficha de controle de EPI</h1>
+<p class="lead">Registro de fornecimento de Equipamento de Proteção Individual, conforme a NR-6.</p>
+<dl class="fatos">
+  <div><dt>Colaborador</dt><dd>{{ t.nome }}</dd></div>
+  <div><dt>Matrícula</dt><dd>{{ t.matricula }}</dd></div>
+  <div><dt>Função</dt><dd>{{ t.funcao|default:"—" }}</dd></div>
+  <div><dt>Setor</dt><dd>{{ t.setor|default:"—" }}</dd></div>
+</dl>
+<p class="suave" style="margin:24px 0">Declaro ter recebido gratuitamente os EPIs abaixo e ter sido orientado sobre o uso adequado, a guarda e a conservação, comprometendo-me a usá-los apenas para a finalidade a que se destinam e a comunicar qualquer alteração que os torne impróprios para uso.</p>
+<div class="rolagem"><table class="tabela">
+  <thead><tr><th class="num">Data</th><th>EPI</th><th>CA</th><th>Unidade</th><th>Motivo</th><th class="num">Devolução</th><th>Assinatura</th></tr></thead>
+  <tbody>
+  {% for e in entregas %}
+  <tr>
+    <td class="num">{{ e.entregue_em|date:"d/m/Y" }}</td>
+    <td>{{ e.unidade.tipo.nome }}</td>
+    <td>{% ca e.unidade.tipo %}</td>
+    <td><span class="codigo" style="font-weight:500">{{ e.unidade.codigo }}</span></td>
+    <td>{{ e.get_motivo_display }}</td>
+    <td class="num">{{ e.devolvido_em|date:"d/m/Y"|default:"—" }}</td>
+    <td>{% for a in e.assinaturas.all %}<img src="{{ a.imagem }}" alt="Assinatura de {{ a.signatario_nome }}" style="height:34px;display:block">{% empty %}<span class="mudo">—</span>{% endfor %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="7" class="mudo">Nenhuma entrega registrada.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+<p class="grafico-nota" style="margin-top:24px">Gerada pelo SAFEEPI em {{ gerado_em|date:"d/m/Y H:i" }}. Cada assinatura foi registrada eletronicamente com data, hora, usuário do aparelho e hash SHA-256.</p>
+{% endblock %}

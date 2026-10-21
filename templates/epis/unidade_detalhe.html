@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}{{ u.codigo }}{% endblock %}
+{% block conteudo %}
+<a class="voltar nao-imprimir" href="{% url 'epis:unidades' %}">Unidades</a>
+<div class="cabecalho">
+  <h1>{{ u.tipo.nome }}</h1>
+  <p class="lead"><span class="codigo">{{ u.codigo }}</span> {% ca u.tipo %}</p>
+  <p class="rotulo" style="margin-top:12px">{% sinal situacao.0 "md" %}<span class="rotulo-texto"><strong>{{ u.get_status_display }}.</strong> {{ situacao.1 }}</span></p>
+</div>
+<div class="grade-2">
+  <section class="secao">
+    <h2 class="secao-titulo">Dados</h2>
+    <dl class="fatos" style="margin:0">
+      <div><dt>Certificado de Aprovação</dt><dd>{% ca u.tipo %}<span class="sub">{% if u.tipo.ca_vigente %}Válido até{% else %}Vencido em{% endif %} {{ u.tipo.validade_ca|date:"d/m/Y" }}</span></dd></div>
+      <div><dt>Categoria</dt><dd>{{ u.tipo.get_categoria_display }}</dd></div>
+      <div><dt>Validade da unidade</dt><dd>{{ u.validade|date:"d/m/Y"|default:"Não informada" }}</dd></div>
+      <div><dt>Vida útil após entrega</dt><dd>{% if u.tipo.vida_util_dias %}{{ u.tipo.vida_util_dias }} dias{% else %}Sem limite{% endif %}</dd></div>
+      <div><dt>Série ou lote</dt><dd>{{ u.serie_lote|default:"—" }}</dd></div>
+      <div><dt>Tamanho</dt><dd>{{ u.tamanho|default:"—" }}</dd></div>
+    </dl>
+  </section>
+  <section class="secao">
+    <div class="secao-titulo"><h2>Etiqueta</h2><button class="btn btn-texto nao-imprimir" type="button" onclick="window.print()">Imprimir</button></div>
+    <div style="border:1px solid var(--ink);border-radius:8px;padding:18px 20px;max-width:300px">
+      <div class="mudo pequeno">SAFEEPI</div>
+      <div style="font-size:30px;font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums">{{ u.codigo }}</div>
+      <div class="pequeno">{{ u.tipo.nome }}</div>
+      <div class="pequeno">CA {{ u.tipo.numero_ca }}{% if u.validade %}, validade {{ u.validade|date:"d/m/Y" }}{% endif %}</div>
+    </div>
+    <p class="mudo pequeno" style="margin-top:10px">O último dígito confere a digitação. Na fase 2, o mesmo código vira QR Code.</p>
+  </section>
+</div>
+{% if alertas %}
+<section class="secao"><h2 class="secao-titulo">Alertas abertos</h2>
+  <ul class="lista-simples">{% for a in alertas %}<li>{% sinal a|sinal_alerta %}<div class="principal">{{ a.get_tipo_display }} em {{ a.vence_em|date:"d/m/Y" }}<span class="sub">{{ a.faixa_label }}</span></div></li>{% endfor %}</ul></section>
+{% endif %}
+<section class="secao">
+  <h2 class="secao-titulo">Entregas</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>Colaborador</th><th class="num">Entregue em</th><th class="num">Devolvido em</th><th>Motivo</th><th>Por</th></tr></thead>
+    <tbody>{% for e in entregas %}<tr><td><a href="{% url 'relatorios:trabalhador' e.trabalhador_id %}">{{ e.trabalhador.nome }}</a></td><td class="num">{{ e.entregue_em|date:"d/m/Y H:i" }}</td><td class="num">{{ e.devolvido_em|date:"d/m/Y H:i"|default:"Em uso" }}</td><td>{{ e.get_motivo_display }}</td><td>{{ e.entregue_por.nome_exibicao }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="mudo">Nunca foi entregue.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<section class="secao">
+  <h2 class="secao-titulo">Conferências</h2>
+  <ul class="lista-simples">{% for c in conferencias %}<li>{% sinal c|sinal_item %}<div class="principal"><a href="{% url 'liberacoes:detalhe' c.pre_liberacao_id %}">{{ c.pre_liberacao.numero }}</a> {{ c.pre_liberacao.atividade.nome }}<span class="sub">{{ c.pre_liberacao.trabalhador.nome }}, {{ c.pre_liberacao.aberta_em|date:"d/m/Y H:i" }}: {{ c.get_resultado_auto_display|lower }}, conferência física {{ c.get_resultado_fisico_display|lower }}</span></div></li>
+  {% empty %}<li class="mudo">Ainda não passou por conferência.</li>{% endfor %}</ul>
+</section>
+{% endblock %}

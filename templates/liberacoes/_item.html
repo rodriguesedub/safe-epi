@@ -1,0 +1,48 @@
+{% load safeepi %}<div class="item" id="item-{{ item.id }}" data-tour="item" data-tipo="{{ item.tipo_epi.nome|slugify }}">
+  <div class="item-cabeca">
+    {% sinal item|sinal_item "md" %}
+    <div>
+      <div class="item-nome">{{ item.tipo_epi.nome }}</div>
+      <div class="item-meta">{% ca item.tipo_epi %}{% if item.unidade %}<span class="codigo">{{ item.unidade.codigo }}</span>{% endif %}{% if item.auto_ok %}<span>{{ item.motivo_auto }}</span>{% endif %}</div>
+    </div>
+  </div>
+  {% if not item.auto_ok %}
+  <div class="problema" data-tour="problema">
+    <span><strong>{{ item.get_resultado_auto_display }}.</strong> {{ item.motivo_auto }}.</span>
+    <span class="acoes">
+      {% if pode_pedir %}
+      <form method="post" action="{% url 'liberacoes:pedir_substituicao' pre.pk item.pk %}">{% csrf_token %}
+        <button class="btn btn-secundario btn-pequeno" type="submit" data-tour="pedir-troca">Pedir troca ao almoxarifado</button>
+      </form>
+      {% endif %}
+      {% if pode_substituir %}
+      <a class="btn btn-pequeno" href="{% url 'epis:entrega_nova' %}?trabalhador={{ pre.trabalhador_id }}&tipo={{ item.tipo_epi_id }}&next={% url 'liberacoes:detalhe' pre.pk %}">Entregar substituto</a>
+      {% endif %}
+    </span>
+  </div>
+  {% endif %}
+  {% if pode_conferir %}
+  <form method="post" action="{% url 'liberacoes:marcar_item' pre.pk item.pk %}" enctype="multipart/form-data"
+        hx-post="{% url 'liberacoes:marcar_item' pre.pk item.pk %}" hx-encoding="multipart/form-data"
+        hx-trigger="change" hx-target="#item-{{ item.id }}" hx-swap="outerHTML">
+    {% csrf_token %}
+    <fieldset class="segmentado">
+      <legend class="visualmente-oculto">Conferência física: {{ item.tipo_epi.nome }}</legend>
+      {% for valor, rotulo in opcoes_fisico %}
+      <label class="op-{{ valor }}"><input type="radio" name="resultado" value="{{ valor }}" {% if item.resultado_fisico == valor %}checked{% endif %}>{{ rotulo }}</label>
+      {% endfor %}
+    </fieldset>
+    <details class="detalhes" {% if item.observacao or item.foto %}open{% endif %}>
+      <summary>Observação ou foto</summary>
+      <div class="campo"><label for="obs-{{ item.id }}">Observação</label><textarea id="obs-{{ item.id }}" name="observacao" rows="2" maxlength="300">{{ item.observacao }}</textarea></div>
+      <div class="campo"><label for="foto-{{ item.id }}">Foto</label><input type="file" id="foto-{{ item.id }}" name="foto" accept="image/*" capture="environment">
+        {% if item.foto %}<p class="pequeno"><a href="{{ item.foto.url }}" target="_blank" rel="noopener"><img class="foto-miniatura" src="{{ item.foto.url }}" alt="Foto de {{ item.tipo_epi.nome }}"></a></p>{% endif %}</div>
+    </details>
+    <noscript><button class="btn btn-secundario btn-pequeno" type="submit">Salvar</button></noscript>
+    <span class="item-salvando">Salvando…</span>
+  </form>
+  {% if erro %}<div class="erro-inline" role="alert">{{ erro }}</div>{% endif %}
+  {% elif not item.pendente %}
+  <div class="pequeno suave">Conferência física: <strong>{{ item.get_resultado_fisico_display }}</strong>{% if item.observacao %}. {{ item.observacao }}{% endif %}</div>
+  {% endif %}
+</div>

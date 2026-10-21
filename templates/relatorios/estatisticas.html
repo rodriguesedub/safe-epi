@@ -1,0 +1,86 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Estatísticas de EPI{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>Estatísticas de EPI</h1><p class="lead">Quanto há de cada EPI, quem mais danifica ou perde e quem está com EPI fora da validade.</p></div>
+  <nav class="segmentos-periodo" aria-label="Período">
+    {% for d, rotulo in e.periodos %}<a href="?dias={{ d }}" class="{% if d == e.dias %}atual{% endif %}">{{ rotulo }}</a>{% endfor %}
+  </nav>
+</div>
+
+<div class="figuras cinco" data-tour="figuras-epi">
+  <div><div class="figura-rotulo">Em uso</div><div class="figura-valor">{{ e.kpis.em_uso }}</div><div class="figura-nota">unidades com colaboradores</div></div>
+  <div><div class="figura-rotulo">Em estoque</div><div class="figura-valor">{{ e.kpis.estoque }}</div><div class="figura-nota">prontas para entrega</div></div>
+  <div><div class="figura-rotulo">Fora de uso</div><div class="figura-valor">{{ e.kpis.fora_de_uso }}</div><div class="figura-nota">{{ e.kpis.avariados }} avariadas ou descartadas, {{ e.kpis.extraviados }} extraviadas</div></div>
+  <div><div class="figura-rotulo">Vencidos em uso</div><div class="figura-valor{% if e.kpis.vencidos_em_uso %} bad{% endif %}">{{ e.kpis.vencidos_em_uso }}</div><div class="figura-nota">com {{ e.kpis.colaboradores_vencidos }} colaborador{{ e.kpis.colaboradores_vencidos|pluralize:"es" }}</div></div>
+  <div><div class="figura-rotulo">Danos e perdas</div><div class="figura-valor">{{ e.kpis.danos|add:e.kpis.perdas }}</div><div class="figura-nota">{{ e.kpis.danos }} danos, {{ e.kpis.perdas }} perdas em {{ e.dias }} dias</div></div>
+</div>
+
+<div class="grade-2">
+  <section class="secao" data-tour="mais-danifica">
+    <h2 class="secao-titulo">Quem mais danifica</h2>
+    {% if e.mais_danifica %}
+    <div class="barras">{% for b in e.mais_danifica %}<div class="barra" title="{{ b.nome }}: {{ b.valor }} EPI{{ b.valor|pluralize }} danificado{{ b.valor|pluralize }}"><span class="barra-nome">{{ b.nome }}</span><span class="barra-trilho"><span class="barra-valor" style="width:{{ b.pct }}%"></span></span><span class="barra-n">{{ b.valor }}</span></div>{% endfor %}</div>
+    <p class="grafico-nota">EPIs danificados em {{ e.dias }} dias, por colaborador.</p>
+    {% else %}<p class="mudo">Nenhum dano no período.</p>{% endif %}
+  </section>
+  <section class="secao" data-tour="mais-perde">
+    <h2 class="secao-titulo">Quem mais perde</h2>
+    {% if e.mais_perde %}
+    <div class="barras">{% for b in e.mais_perde %}<div class="barra" title="{{ b.nome }}: {{ b.valor }} EPI{{ b.valor|pluralize }} perdido{{ b.valor|pluralize }}"><span class="barra-nome">{{ b.nome }}</span><span class="barra-trilho"><span class="barra-valor" style="width:{{ b.pct }}%"></span></span><span class="barra-n">{{ b.valor }}</span></div>{% endfor %}</div>
+    <p class="grafico-nota">EPIs perdidos ou extraviados em {{ e.dias }} dias, por colaborador.</p>
+    {% else %}<p class="mudo">Nenhuma perda no período.</p>{% endif %}
+  </section>
+</div>
+
+<section class="secao" data-tour="fora-validade">
+  <h2 class="secao-titulo">Colaboradores com EPI fora da validade</h2>
+  <ul class="lista-simples">
+    {% for f in e.fora_validade %}
+    <li>{% sinal "bloqueio" %}<div class="principal"><a class="forte" href="{% url 'relatorios:trabalhador' f.entrega.trabalhador_id %}">{{ f.entrega.trabalhador.nome }}</a>
+      <span class="sub">{{ f.entrega.unidade.tipo.nome }} {% ca f.entrega.unidade.tipo %} <span class="codigo" style="font-weight:500">{{ f.entrega.unidade.codigo }}</span>. {{ f.motivo }}.</span></div>
+      <a class="btn btn-secundario btn-pequeno lado" href="{% url 'epis:entrega_nova' %}?trabalhador={{ f.entrega.trabalhador_id }}&tipo={{ f.entrega.unidade.tipo_id }}">Trocar</a></li>
+    {% empty %}<li class="mudo">Nenhum colaborador com EPI fora da validade.</li>{% endfor %}
+  </ul>
+</section>
+
+<section class="secao" data-tour="estoque-tipo">
+  <h2 class="secao-titulo">Quanto há de cada EPI</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>Tipo de EPI</th><th>CA</th><th class="num">Em estoque</th><th class="num">Em uso</th><th class="num">Fora de uso</th><th class="num">Vencidas</th><th class="num">Vencem em 30 dias</th><th class="num">Danos</th><th class="num">Perdas</th></tr></thead>
+    <tbody>
+    {% for l in e.estoque %}
+    <tr>
+      <td>{{ l.tipo.nome }}</td>
+      <td>{% ca l.tipo %}</td>
+      <td class="num">{{ l.estoque }}</td>
+      <td class="num">{{ l.em_uso }}</td>
+      <td class="num{% if not l.fora_de_uso %} zero{% endif %}">{{ l.fora_de_uso }}</td>
+      <td class="num{% if not l.vencidas %} zero{% endif %}"{% if l.vencidas %} style="color:var(--bad)"{% endif %}>{{ l.vencidas }}</td>
+      <td class="num{% if not l.vencendo %} zero{% endif %}">{{ l.vencendo }}</td>
+      <td class="num{% if not l.danos %} zero{% endif %}">{{ l.danos }}</td>
+      <td class="num{% if not l.perdas %} zero{% endif %}">{{ l.perdas }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="grafico-nota">Danos e perdas nos últimos {{ e.dias }} dias. Unidades vencidas contam estoque e uso.</p>
+</section>
+
+<section class="secao">
+  <h2 class="secao-titulo">Ocorrências por colaborador</h2>
+  {% if e.ocorrencias %}
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>Colaborador</th><th class="num">Danos</th><th class="num">Perdas</th><th class="num">Não levou à conferência</th><th class="num">Vencidos em uso</th><th class="num">Total</th></tr></thead>
+    <tbody>
+    {% for o in e.ocorrencias %}
+    <tr><td><a href="{% url 'relatorios:trabalhador' o.trabalhador_id %}">{{ o.nome }}</a></td>
+      <td class="num{% if not o.danos %} zero{% endif %}">{{ o.danos }}</td><td class="num{% if not o.perdas %} zero{% endif %}">{{ o.perdas }}</td>
+      <td class="num{% if not o.ausencias %} zero{% endif %}">{{ o.ausencias }}</td><td class="num{% if not o.vencidos %} zero{% endif %}">{{ o.vencidos }}</td>
+      <td class="num forte">{{ o.total }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="mudo">Nenhuma ocorrência no período.</p>{% endif %}
+</section>
+{% endblock %}

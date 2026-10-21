@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Almoxarifado{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>Almoxarifado</h1><p class="lead">{{ n_fila }} pedido{{ n_fila|pluralize }} de reposição aberto{{ n_fila|pluralize }} e {{ estoque }} unidades em estoque.</p></div>
+  <div class="acoes"><a class="btn" href="{% url 'epis:entrega_nova' %}">Entregar EPI</a><a class="btn btn-secundario" href="{% url 'cadastros:importar' %}">Importar planilha</a></div>
+</div>
+<div class="grade-2">
+  <section class="secao" data-tour="fila-reposicao">
+    <div class="secao-titulo"><h2>Fila de reposição</h2><a class="acoes-titulo" href="{% url 'reposicao:fila' %}">Ver tudo</a></div>
+    <ul class="lista-simples">
+      {% for s in fila %}
+      <li{% if s.pre_liberacao_id %} data-sol-pre="{{ s.pre_liberacao_id }}"{% endif %}>{% if s.bloqueando %}{% sinal "bloqueio" %}{% else %}{% sinal "atencao" %}{% endif %}
+        <div class="principal"><span class="forte">{{ s.tipo_epi.nome }}</span> {% ca s.tipo_epi %}
+          <span class="sub">{{ s.trabalhador.nome }}, {{ s.get_motivo_display|lower }}</span>
+          {% if s.aguardando_no_local %}<span class="sub" style="color:var(--bad)">Colaborador aguardando no local</span>{% endif %}</div>
+        <a class="btn btn-pequeno lado" data-tour="atender" href="{% url 'epis:entrega_nova' %}?solicitacao={{ s.pk }}{% if s.pre_liberacao_id %}&next={% url 'liberacoes:detalhe' s.pre_liberacao_id %}{% endif %}">Atender</a></li>
+      {% empty %}<li class="mudo">Nenhum pedido aberto.</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="secao">
+    <div class="secao-titulo"><h2>Vencimentos próximos</h2><a class="acoes-titulo" href="{% url 'alertas:painel' %}">Ver alertas</a></div>
+    <ul class="lista-simples">
+      {% for a in alertas %}
+      <li>{% sinal a|sinal_alerta %}<div class="principal">{% if a.unidade %}{{ a.unidade.tipo.nome }} {% ca a.unidade.tipo %}<span class="sub"><a class="codigo" href="{% url 'epis:unidade' a.unidade.codigo %}">{{ a.unidade.codigo }}</a>, {{ a.get_tipo_display|lower }} em {{ a.vence_em|date:"d/m/Y" }}</span>{% else %}{{ a.tipo_epi.nome }} {% ca a.tipo_epi %}<span class="sub">{{ a.get_tipo_display }} em {{ a.vence_em|date:"d/m/Y" }}</span>{% endif %}</div></li>
+      {% empty %}<li class="mudo">Nada vencendo nos próximos 30 dias.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

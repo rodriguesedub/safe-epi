@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block pagina %}
+<main class="login-pagina" id="conteudo">
+  <div class="login-caixa">
+    <div class="marca">{% include "partials/_logo.svg" %}SAFEEPI</div>
+    <h1>Entrar</h1>
+    <p class="lead">Conferência de EPIs antes da atividade.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% include "partials/_mensagens.html" %}
+      {% if form.non_field_errors %}<div class="aviso aviso-error" style="margin-bottom:18px"><span>Usuário ou senha incorretos.</span></div>{% endif %}
+      <div class="campo"><label for="id_username">Usuário ou e-mail</label>
+        <input type="text" name="username" id="id_username" autocomplete="username" autocapitalize="none" required autofocus value="{{ form.username.value|default:'' }}"></div>
+      <div class="campo"><label for="id_password">Senha</label>
+        <input type="password" name="password" id="id_password" autocomplete="current-password" required></div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-grande btn-largo" type="submit">Entrar</button>
+    </form>
+    {% if DEMO_MODE %}
+    <div class="login-tour">
+      <h2>Ver como funciona</h2>
+      <p>Um tutorial de 3 minutos com o fluxo completo, do pedido do colaborador à aprovação. Os dados de demonstração voltam ao início.</p>
+      <div class="acoes">
+        <form method="post" action="{% url 'core:demo_iniciar' %}">{% csrf_token %}<input type="hidden" name="modo" value="guiado">
+          <button class="btn btn-secundario" type="submit" data-tour-inicio="guiado">Tutorial guiado</button></form>
+        <form method="post" action="{% url 'core:demo_iniciar' %}">{% csrf_token %}<input type="hidden" name="modo" value="auto">
+          <button class="btn btn-secundario" type="submit" data-tour-inicio="auto">Reprodução automática</button></form>
+      </div>
+    </div>
+    <div class="login-demo">
+      Usuários de demonstração, senha <strong>safeepi123</strong>
+      <table>
+        <tr><td>operador</td><td>João, colaborador</td></tr>
+        <tr><td>tecnico</td><td>Rodrigo, técnico de segurança</td></tr>
+        <tr><td>almox</td><td>Paulo, almoxarifado</td></tr>
+        <tr><td>gestor</td><td>Mariana, gestora de SST</td></tr>
+        <tr><td>operador2</td><td>Ana, colaboradora</td></tr>
+        <tr><td>admin</td><td>Administrador</td></tr>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

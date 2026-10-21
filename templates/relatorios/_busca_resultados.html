@@ -1,0 +1,25 @@
+{% load safeepi %}<section class="secao">
+  <div class="secao-titulo"><h2>Pré-liberações</h2><span class="mudo pequeno">{{ n_pres }} encontrada{{ n_pres|pluralize }}{% if n_pres > 50 %}, mostrando 50{% endif %}</span></div>
+  {% if pres %}
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>Número</th><th>Situação</th><th>Atividade</th><th>Colaborador</th><th class="num">Aberta em</th><th class="num">Tempo</th></tr></thead>
+    <tbody>{% for p in pres %}{% include "partials/_linha_pre.html" %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="vazio"><p>Nenhuma pré-liberação com esses filtros.</p></div>{% endif %}
+</section>
+<section class="secao">
+  <div class="secao-titulo"><h2>Entregas de EPI</h2><span class="mudo pequeno">{{ n_entregas }} encontrada{{ n_entregas|pluralize }}{% if n_entregas > 50 %}, mostrando 50{% endif %}</span></div>
+  {% if entregas %}
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>EPI</th><th>CA</th><th>Colaborador</th><th class="num">Entregue em</th><th>Situação</th><th>Por</th></tr></thead>
+    <tbody>{% for e in entregas %}
+      <tr><td>{{ e.unidade.tipo.nome }}<span class="sub"><a class="codigo" style="font-weight:500" href="{% url 'epis:unidade' e.unidade.codigo %}">{{ e.unidade.codigo }}</a></span></td>
+      <td>{% ca e.unidade.tipo %}</td>
+      <td><a href="{% url 'relatorios:trabalhador' e.trabalhador_id %}">{{ e.trabalhador.nome }}</a></td>
+      <td class="num">{{ e.entregue_em|date:"d/m/Y H:i" }}</td>
+      <td>{% if e.devolvido_em %}Encerrada em {{ e.devolvido_em|date:"d/m/Y" }}{% else %}Em uso{% endif %}</td>
+      <td>{{ e.entregue_por.nome_exibicao }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="vazio"><p>Nenhuma entrega com esses filtros.</p></div>{% endif %}
+</section>

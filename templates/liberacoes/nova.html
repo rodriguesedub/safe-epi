@@ -1,0 +1,56 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}{% if trabalhadores %}Nova conferência{% else %}Solicitar liberação{% endif %}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>{% if trabalhadores %}Nova conferência{% else %}Solicitar liberação{% endif %}</h1>
+  <p class="lead">{% if trabalhadores %}Escolha o colaborador e a atividade. O checklist é montado com os EPIs exigidos e os que estão com ele.{% else %}Escolha a atividade. O técnico de segurança recebe o pedido e confere seus EPIs no local.{% endif %}</p>
+</div>
+<form method="post">
+  {% csrf_token %}
+  <section class="secao">
+    <h2 class="secao-titulo">Atividade</h2>
+    <fieldset style="border:0;margin:0;padding:0" data-tour="atividades">
+      <legend class="visualmente-oculto">Atividade</legend>
+      <ul class="lista-simples">
+      {% for a in atividades %}
+        <li>
+          <label class="caixa-marcar" style="width:100%;padding:0;font-weight:400" data-atividade="{{ a.nr_referencia|slugify }}">
+            <input type="radio" name="atividade" value="{{ a.pk }}" required {% if dados.atividade == a.pk|stringformat:"s" %}checked{% endif %}>
+            <span><span class="forte">{{ a.nome }}</span>{% if a.nr_referencia %} <span class="mudo">{{ a.nr_referencia }}</span>{% endif %}
+              <span class="sub">{{ a.modo_label }}{% if a.exige_aprovacao %}: o gestor de SST aprova depois da conferência{% else %}: conferência 100% conforme libera na hora{% endif %}</span>
+              <span class="sub">{% for r in a.requisitos.all %}{{ r.tipo_epi.nome }} {% ca r.tipo_epi %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+            </span>
+          </label>
+        </li>
+      {% empty %}<li class="mudo">Nenhuma atividade ativa com EPIs obrigatórios.</li>{% endfor %}
+      </ul>
+    </fieldset>
+  </section>
+  <section class="secao" data-tour="onde">
+    <h2 class="secao-titulo">Onde e para quem</h2>
+    <div class="grade-2" style="gap:0 32px">
+      <div class="campo">
+        {% if trabalhadores %}
+        <label for="id_trabalhador">Colaborador</label>
+        <select id="id_trabalhador" name="trabalhador" required>
+          <option value="">Escolha</option>
+          {% for t in trabalhadores %}<option value="{{ t.pk }}" {% if dados.trabalhador == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }} ({{ t.matricula }})</option>{% endfor %}
+        </select>
+        {% else %}
+        <span class="rotulo-campo">Colaborador</span>
+        <p>{{ user.trabalhador.nome }} <span class="mudo">{{ user.trabalhador.matricula }}</span></p>
+        {% endif %}
+      </div>
+      <div class="campo">
+        <label for="id_local">Local da atividade</label>
+        <input type="text" id="id_local" name="local" required maxlength="120" value="{{ dados.local|default:'' }}" placeholder="Torre de resfriamento 2, nível 3">
+      </div>
+      <div class="campo">
+        <label for="id_pt">Nº da PT ou OS</label>
+        <input type="text" id="id_pt" name="numero_pt_os" maxlength="30" value="{{ dados.numero_pt_os|default:'' }}" placeholder="Opcional">
+      </div>
+    </div>
+  </section>
+  <button class="btn btn-grande" type="submit" data-tour="enviar-pedido">{% if trabalhadores %}Abrir conferência{% else %}Enviar pedido ao técnico{% endif %}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% load safeepi %}<div class="estado estado-{{ pre.status }}" data-tour="estado">
+  {% sinal pre.status|sinal_pre "lg" %}
+  <div>
+    <div class="estado-titulo">{% if pre.status == "LIBERADA" %}Atividade liberada{% elif pre.status == "BLOQUEADA" %}Atividade bloqueada{% elif pre.status == "EM_CONFERENCIA" %}{% if progresso.feitos %}Em conferência{% else %}Aguardando conferência{% endif %}{% else %}{{ pre.get_status_display }}{% endif %}</div>
+    <div class="estado-sub">{{ pre.numero }}, {{ pre.atividade.nome }}{% if pre.atividade.nr_referencia %} ({{ pre.atividade.nr_referencia }}){% endif %}</div>
+  </div>
+</div>

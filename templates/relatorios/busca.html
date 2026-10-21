@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Colaboradores{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Buscar histórico</h1>
+  <p class="lead">Pré-liberações e entregas por colaborador, atividade, data ou EPI.</p>
+</div>
+<form method="get" class="filtros" hx-get="{% url 'relatorios:busca' %}" hx-target="#resultados" hx-trigger="keyup delay:300ms, change" hx-push-url="true">
+  <div class="campo"><label for="f_trab">Colaborador</label><input type="search" id="f_trab" name="trabalhador" value="{{ f.trabalhador }}" placeholder="Nome ou matrícula"></div>
+  <div class="campo"><label for="f_ativ">Atividade</label><select id="f_ativ" name="atividade"><option value="">Todas</option>{% for a in atividades %}<option value="{{ a.pk }}" {% if f.atividade == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.nome }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="f_ini">De</label><input type="date" id="f_ini" name="inicio" value="{{ f.inicio }}"></div>
+  <div class="campo"><label for="f_fim">Até</label><input type="date" id="f_fim" name="fim" value="{{ f.fim }}"></div>
+  <div class="campo"><label for="f_epi">EPI ou CA</label><input type="search" id="f_epi" name="epi" value="{{ f.epi }}" placeholder="Código, tipo ou CA"></div>
+  <div class="campo"><label for="f_status">Situação</label><select id="f_status" name="status"><option value="">Todas</option>{% for v, r in status_opcoes %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></div>
+  <noscript><div class="campo"><button class="btn btn-secundario" type="submit">Buscar</button></div></noscript>
+</form>
+<div id="resultados">{% include "relatorios/_busca_resultados.html" %}</div>
+{% endblock %}

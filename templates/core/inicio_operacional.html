@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Início{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div>
+    <h1>Olá, {{ user.first_name|default:user.username }}</h1>
+    {% if trabalhador %}<p class="lead">Antes de começar uma atividade, solicite a liberação. O técnico de segurança confere seus EPIs no local.</p>{% endif %}
+  </div>
+  {% if trabalhador %}<a class="btn btn-grande" href="{% url 'liberacoes:nova' %}" data-tour="solicitar">Solicitar liberação</a>{% endif %}
+</div>
+{% if not trabalhador %}
+<div class="vazio"><p>Seu usuário ainda não está vinculado a um colaborador. Fale com o gestor de SST.</p></div>
+{% else %}
+
+{% if em_andamento %}
+<section class="secao" data-tour="em-andamento">
+  <h2 class="secao-titulo">Em andamento</h2>
+  <ul class="lista-simples">
+    {% for p in em_andamento %}
+    <li>{% sinal p.status|sinal_pre "md" %}
+      <div class="principal"><a class="forte" href="{% url 'liberacoes:detalhe' p.pk %}">{{ p.atividade.nome }}</a>
+        <span class="sub">{% if p.status == "EM_CONFERENCIA" %}Aguardando a conferência do técnico de segurança{% else %}Conferida, aguardando a aprovação do gestor{% endif %}</span></div>
+      <a class="btn btn-secundario btn-pequeno lado" href="{% url 'liberacoes:detalhe' p.pk %}">Ver</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="secao" data-tour="meus-epis">
+  <div class="secao-titulo"><h2>Meus EPIs</h2><a class="acoes-titulo" href="{% url 'epis:meus' %}">Ver detalhes</a></div>
+  <p class="suave pequeno">{{ n_ok }} em dia{% if n_atencao %}, {{ n_atencao }} vence{{ n_atencao|pluralize:"m" }} em até 30 dias{% endif %}{% if n_bloqueio %}, <span style="color:var(--bad)">{{ n_bloqueio }} vencido{{ n_bloqueio|pluralize }} ou avariado{{ n_bloqueio|pluralize }}</span>{% endif %}.</p>
+  <ul class="lista-simples">
+    {% for e, s in entregas %}
+    <li>{% sinal s.0 %}
+      <div class="principal">{{ e.unidade.tipo.nome }} {% ca e.unidade.tipo %}<span class="sub">{{ s.1 }}</span></div></li>
+    {% empty %}<li class="mudo">Nenhum EPI entregue a você.</li>{% endfor %}
+  </ul>
+</section>
+
+{% if solicitacoes %}
+<section class="secao">
+  <h2 class="secao-titulo">Pedidos de troca abertos</h2>
+  <ul class="lista-simples">{% for s in solicitacoes %}<li>{% sinal "atencao" %}<div class="principal">{{ s.tipo_epi.nome }} {% ca s.tipo_epi %}<span class="sub">{{ s.get_motivo_display }}, pedido em {{ s.criada_em|date:"d/m/Y H:i" }}</span></div></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if recentes %}
+<section class="secao">
+  <h2 class="secao-titulo">Últimas pré-liberações</h2>
+  <ul class="lista-simples">
+    {% for p in recentes %}
+    <li>{% sinal p.status|sinal_pre %}<div class="principal"><a href="{% url 'liberacoes:detalhe' p.pk %}">{{ p.atividade.nome }}</a><span class="sub">{{ p.get_status_display }} em {{ p.decidida_em|default:p.aberta_em|date:"d/m/Y H:i" }}</span></div></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

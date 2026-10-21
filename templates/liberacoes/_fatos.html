@@ -1,0 +1,10 @@
+{% load safeepi %}<dl class="fatos">
+  <div><dt>Colaborador</dt><dd><a href="{% url 'relatorios:trabalhador' pre.trabalhador_id %}">{{ pre.trabalhador.nome }}</a> <span class="mudo">{{ pre.trabalhador.matricula }}</span></dd></div>
+  <div><dt>Local</dt><dd>{{ pre.local }}</dd></div>
+  <div><dt>PT ou OS</dt><dd>{{ pre.numero_pt_os|default:"Não informada" }}</dd></div>
+  <div><dt>Rigor</dt><dd>{{ pre.modo_label }}</dd></div>
+  <div><dt>Solicitada</dt><dd>{{ pre.aberta_em|date:"d/m H:i" }} por {{ pre.solicitante.nome_exibicao }}</dd></div>
+  {% if pre.conferida_por %}<div><dt>Conferida</dt><dd>{{ pre.conferida_em|date:"d/m H:i" }} por {{ pre.conferida_por.nome_exibicao }}</dd></div>{% endif %}
+  {% if pre.decidida_por %}<div><dt>Decidida</dt><dd>{{ pre.decidida_em|date:"d/m H:i" }} por {{ pre.decidida_por.nome_exibicao }}</dd></div>{% endif %}
+  <div><dt>{% if pre.decidida_em %}Tempo até a decisão{% else %}Tempo decorrido{% endif %}</dt><dd>{{ pre.duracao|duracao }}</dd></div>
+</dl>

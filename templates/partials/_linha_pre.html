@@ -1,0 +1,8 @@
+{% load safeepi %}<tr>
+  <td><a class="linha-link" href="{% url 'liberacoes:detalhe' p.pk %}">{{ p.numero }}</a></td>
+  <td><span class="rotulo">{% sinal p.status|sinal_pre %}<span class="rotulo-texto">{{ p.get_status_display }}</span></span></td>
+  <td>{{ p.atividade.nome }}<span class="sub">{{ p.atividade.nr_referencia }}, {{ p.modo_label|lower }}</span></td>
+  <td>{{ p.trabalhador.nome }}<span class="sub">{{ p.trabalhador.matricula }}</span></td>
+  <td class="num">{{ p.aberta_em|date:"d/m/Y H:i" }}</td>
+  <td class="num">{% if p.decidida_em %}{{ p.duracao|duracao }}{% elif p.status == "CANCELADA" %}—{% else %}<span class="mudo">{{ p.duracao|duracao }}</span>{% endif %}</td>
+</tr>

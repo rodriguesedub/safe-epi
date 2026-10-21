@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}Pré-liberações{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>Pré-liberações</h1><p class="lead">Nenhuma atividade começa sem a conferência dos EPIs no local.</p></div>
+  {% if user.is_operacional %}<a class="btn" href="{% url 'liberacoes:nova' %}">Solicitar liberação</a>{% elif user.is_conferente %}<a class="btn" href="{% url 'liberacoes:nova' %}">Nova conferência</a>{% endif %}
+</div>
+<nav class="abas" aria-label="Filtrar por situação">
+  {% for chave, rotulo, n in abas %}<a href="?aba={{ chave }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="{% if aba == chave %}atual{% endif %}">{{ rotulo }} <span class="n">{{ n }}</span></a>{% endfor %}
+</nav>
+<form method="get" class="filtros">
+  <input type="hidden" name="aba" value="{{ aba }}">
+  <div class="campo"><label for="q">Buscar</label><input type="search" id="q" name="q" value="{{ q }}" placeholder="Colaborador, matrícula, atividade ou PT"></div>
+  <div class="campo"><button class="btn btn-secundario" type="submit">Buscar</button></div>
+</form>
+{% if pres %}
+<div class="rolagem"><table class="tabela">
+  <thead><tr><th>Número</th><th>Situação</th><th>Atividade</th><th>Colaborador</th><th class="num">Aberta em</th><th class="num">Tempo</th></tr></thead>
+  <tbody>{% for p in pres %}{% include "partials/_linha_pre.html" %}{% endfor %}</tbody>
+</table></div>
+{% else %}
+<div class="vazio"><p>Nenhuma pré-liberação nesta situação.</p></div>
+{% endif %}
+{% endblock %}

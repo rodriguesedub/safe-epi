@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}{{ t.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho cabecalho-linha">
+  <div><h1>{{ t.nome }}</h1>
+  <p class="lead">Matrícula {{ t.matricula }}{% if t.funcao %}, {{ t.funcao }}{% endif %}{% if t.setor %}, {{ t.setor }}{% endif %}{% if not t.ativo %}. Inativo{% endif %}.</p></div>
+  <a class="btn btn-secundario" href="{% url 'relatorios:ficha_epi' t.pk %}">Ficha de EPI (NR-6)</a>
+</div>
+<div class="grade-2">
+  <section class="secao">
+    <h2 class="secao-titulo">EPIs com o colaborador</h2>
+    <ul class="lista-simples">{% for e, s in ativas %}
+      <li>{% sinal s.0 %}<div class="principal">{{ e.unidade.tipo.nome }} {% ca e.unidade.tipo %}<span class="sub">{% if user.is_almox or user.is_conferente %}<a class="codigo" style="font-weight:500" href="{% url 'epis:unidade' e.unidade.codigo %}">{{ e.unidade.codigo }}</a>{% else %}<span class="codigo" style="font-weight:500">{{ e.unidade.codigo }}</span>{% endif %}. {{ s.1 }}. Recebido em {{ e.entregue_em|date:"d/m/Y" }}.</span></div></li>
+    {% empty %}<li class="mudo">Nenhum EPI em uso.</li>{% endfor %}</ul>
+  </section>
+  <section class="secao">
+    <h2 class="secao-titulo">Pedidos de reposição</h2>
+    <ul class="lista-simples">{% for s in solicitacoes %}
+      <li>{% if s.status == "ABERTA" %}{% sinal "atencao" %}{% elif s.status == "ATENDIDA" %}{% sinal "ok" %}{% else %}{% sinal "neutro" %}{% endif %}<div class="principal">{{ s.tipo_epi.nome }} {% ca s.tipo_epi %}<span class="sub">{{ s.get_status_display }}, {{ s.get_motivo_display|lower }}, {{ s.criada_em|date:"d/m/Y" }}</span></div></li>
+    {% empty %}<li class="mudo">Nenhum pedido.</li>{% endfor %}</ul>
+  </section>
+</div>
+<section class="secao">
+  <h2 class="secao-titulo">Pré-liberações</h2>
+  {% if pres %}<div class="rolagem"><table class="tabela">
+    <thead><tr><th>Número</th><th>Situação</th><th>Atividade</th><th>Colaborador</th><th class="num">Aberta em</th><th class="num">Tempo</th></tr></thead>
+    <tbody>{% for p in pres %}{% include "partials/_linha_pre.html" %}{% endfor %}</tbody></table></div>
+  {% else %}<p class="mudo">Nenhuma pré-liberação.</p>{% endif %}
+</section>
+<section class="secao">
+  <h2 class="secao-titulo">Histórico de entregas</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>EPI</th><th>CA</th><th class="num">Entregue em</th><th class="num">Encerrada em</th><th>Motivo</th><th>Por</th></tr></thead>
+    <tbody>{% for e in historico %}<tr><td>{{ e.unidade.tipo.nome }}<span class="sub codigo" style="font-weight:500">{{ e.unidade.codigo }}</span></td><td>{% ca e.unidade.tipo %}</td><td class="num">{{ e.entregue_em|date:"d/m/Y H:i" }}</td><td class="num">{{ e.devolvido_em|date:"d/m/Y H:i"|default:"Em uso" }}</td><td>{{ e.get_motivo_display }}</td><td>{{ e.entregue_por.nome_exibicao }}</td></tr>
+    {% empty %}<tr><td colspan="6" class="mudo">Nenhuma entrega.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

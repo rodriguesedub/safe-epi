@@ -1,0 +1,4 @@
+<div class="progresso" id="progresso" {% if oob %}hx-swap-oob="true"{% endif %} aria-live="polite" data-tour="progresso">
+  <div class="progresso-texto"><span>{{ progresso.feitos }} de {{ progresso.total }} verificações</span><span>{{ progresso.pct }}%</span></div>
+  <div class="progresso-trilho"><div class="progresso-barra{% if progresso.completo %} completo{% endif %}" style="width: {{ progresso.pct }}%"></div></div>
+</div>

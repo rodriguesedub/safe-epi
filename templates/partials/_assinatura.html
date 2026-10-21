@@ -1,0 +1,13 @@
+<div class="assinatura" data-assinatura data-tour="assinatura-{{ id|default:'a' }}">
+  <span class="rotulo-campo" id="rotulo-assinatura-{{ id|default:'a' }}">{{ rotulo|default:"Assinatura" }}</span>
+  <div class="assinatura-quadro">
+    <canvas aria-labelledby="rotulo-assinatura-{{ id|default:'a' }}" role="img"></canvas>
+    <div class="assinatura-linha"></div>
+    <div class="assinatura-dica">Assine com o dedo, a caneta ou o mouse</div>
+  </div>
+  <input type="hidden" name="{{ nome|default:'assinatura' }}" value="">
+  <div class="assinatura-acoes">
+    <span>{{ quem }}</span>
+    <button type="button" class="btn btn-texto btn-pequeno" data-limpar>Limpar</button>
+  </div>
+</div>

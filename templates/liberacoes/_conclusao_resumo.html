@@ -1,0 +1,14 @@
+{% load safeepi %}<div id="resumo-conclusao" data-completo="{% if progresso.completo %}1{% else %}0{% endif %}" {% if oob %}hx-swap-oob="true"{% endif %}>
+  {% if problemas %}
+  <div class="nota bloqueio">{% sinal "bloqueio" %}<div>
+    <p><strong>Concluir agora bloqueia a atividade.</strong></p>
+    <ul>{% for p in problemas %}<li>{{ p }}</li>{% endfor %}</ul>
+  </div></div>
+  {% elif not progresso.completo %}
+  <div class="nota conferir">{% sinal "conferir" %}<p>{% if progresso.restantes == 1 %}Falta 1 verificação.{% else %}Faltam {{ progresso.restantes }} verificações.{% endif %}</p></div>
+  {% elif pre.exige_aprovacao %}
+  <div class="nota ok">{% sinal "ok" %}<p><strong>Tudo conforme.</strong> Depois das assinaturas, segue para a aprovação do gestor de SST.</p></div>
+  {% else %}
+  <div class="nota ok">{% sinal "ok" %}<p><strong>Tudo conforme.</strong> Em modo registro, a atividade é liberada ao concluir.</p></div>
+  {% endif %}
+</div>

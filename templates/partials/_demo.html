@@ -1,0 +1,27 @@
+{% load safeepi %}<details class="demo nao-imprimir" id="demo">
+  <summary><span class="ponto" aria-hidden="true"></span>Demonstração</summary>
+  <div class="demo-painel" role="region" aria-label="Painel de demonstração">
+    <h3>Entrar como</h3>
+    <div class="demo-usuarios">
+      {% for du in demo_usuarios %}
+      <form method="post" action="{% url 'contas:demo_entrar' du.username %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit"{% if du.pk == user.pk %} aria-current="true"{% endif %}>
+          <span class="avatar">{{ du.nome_exibicao|iniciais }}</span>
+          <span>{{ du.nome_exibicao }}<small>{{ du.get_perfil_display }}</small></span>
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+    <div class="demo-tour">
+      <form method="post" action="{% url 'core:demo_iniciar' %}">{% csrf_token %}
+        <input type="hidden" name="modo" value="guiado">
+        <button class="btn btn-secundario btn-pequeno" type="submit" data-confirmar="Os dados de demonstração voltam ao estado inicial. Começar o tour?">Tour guiado</button>
+      </form>
+      <form method="post" action="{% url 'core:demo_iniciar' %}">{% csrf_token %}
+        <input type="hidden" name="modo" value="auto">
+        <button class="btn btn-pequeno" type="submit" data-confirmar="Os dados voltam ao estado inicial e a demonstração roda sozinha para você gravar. Começar?">Reprodução automática</button>
+      </form>
+    </div>
+  </div>
+</details>

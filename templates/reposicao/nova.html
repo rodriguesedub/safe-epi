@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Pedir troca{% endblock %}
+{% block conteudo %}
+<a class="voltar" href="{% url 'epis:meus' %}">Meus EPIs</a>
+<div class="cabecalho">
+  <h1>{% if unidade %}Pedir troca de {{ unidade.tipo.nome }}{% else %}Pedir EPI{% endif %}</h1>
+  <p class="lead">O pedido vai para o almoxarifado. Se o EPI estiver danificado ou perdido, ele sai de uso na hora.</p>
+</div>
+<form method="post" enctype="multipart/form-data" style="max-width:560px">
+  {% csrf_token %}
+  {% if unidade %}
+  <input type="hidden" name="unidade" value="{{ unidade.pk }}">
+  <p><span class="codigo">{{ unidade.codigo }}</span> {% ca unidade.tipo %}</p>
+  {% else %}
+  <div class="campo"><label for="id_tipo">Tipo de EPI</label>
+    <select id="id_tipo" name="tipo_epi" required><option value="">Escolha</option>{% for t in tipos %}<option value="{{ t.pk }}">{{ t.nome }} (CA {{ t.numero_ca }})</option>{% endfor %}</select></div>
+  {% endif %}
+  <div class="campo"><label for="id_motivo">Motivo</label>
+    <select id="id_motivo" name="motivo" required>{% for v, r in motivos %}<option value="{{ v }}">{{ r }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="id_obs">O que aconteceu</label><textarea id="id_obs" name="observacao" maxlength="300" rows="3" placeholder="Por exemplo, casco trincado na lateral"></textarea></div>
+  <div class="campo"><label for="id_foto">Foto</label><input type="file" id="id_foto" name="foto" accept="image/*" capture="environment"><div class="ajuda">Opcional, até 5 MB.</div></div>
+  <button class="btn btn-grande" type="submit">Enviar pedido</button>
+</form>
+{% endblock %}

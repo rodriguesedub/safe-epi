@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% load safeepi %}
+{% block titulo %}Importar planilha{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Importar planilha</h1>
+  <p class="lead">Traga o que hoje está em planilhas. Linhas com problema são recusadas e listadas; as demais entram.</p>
+</div>
+{% if resultado %}
+<section class="secao">
+  <h2 class="secao-titulo">Resultado</h2>
+  <p class="rotulo">{% sinal "ok" %}<span class="rotulo-texto">{{ resultado.criados }} {% if resultado.tipo == "trabalhadores" %}colaboradores criados e {{ resultado.atualizados }} atualizados{% else %}unidades criadas{% endif %}.</span></p>
+  {% if resultado.erros %}
+  <p class="rotulo">{% sinal "bloqueio" %}<span class="rotulo-texto">{{ resultado.erros|length }} linha{{ resultado.erros|length|pluralize }} recusada{{ resultado.erros|length|pluralize }}</span></p>
+  <div class="rolagem"><table class="tabela"><thead><tr><th class="num">Linha</th><th>Problema</th></tr></thead>
+  <tbody>{% for n, msg in resultado.erros %}<tr><td class="num">{{ n }}</td><td>{{ msg }}</td></tr>{% endfor %}</tbody></table></div>
+  {% endif %}
+</section>
+{% endif %}
+<form method="post" enctype="multipart/form-data" class="secao" style="max-width:560px">
+  {% csrf_token %}
+  <div class="campo"><span class="rotulo-campo">O que importar</span>
+    <fieldset class="segmentado dois" style="grid-template-columns:repeat(2,minmax(0,200px))">
+      <legend class="visualmente-oculto">O que importar</legend>
+      <label class="op-escolha"><input type="radio" name="tipo" value="unidades" {% if tipo != "trabalhadores" %}checked{% endif %}>Unidades de EPI</label>
+      {% if user.is_gestor %}<label class="op-escolha"><input type="radio" name="tipo" value="trabalhadores" {% if tipo == "trabalhadores" %}checked{% endif %}>Colaboradores</label>{% endif %}
+    </fieldset>
+  </div>
+  <div class="campo"><label for="id_arquivo">Arquivo CSV</label><input type="file" id="id_arquivo" name="arquivo" accept=".csv,text/csv" required><div class="ajuda">Separado por ponto e vírgula ou vírgula.</div></div>
+  <button class="btn btn-grande" type="submit">Importar</button>
+</form>
+<section class="secao">
+  <h2 class="secao-titulo">Formato</h2>
+  <p><strong>Unidades de EPI:</strong> colunas <code>tipo;serie_lote;tamanho;fabricacao;validade</code>. O tipo é o nome exato ou o nº do CA. Datas em dd/mm/aaaa.</p>
+  <p><strong>Colaboradores:</strong> colunas <code>matricula;nome;funcao;setor</code>. Matrícula existente é atualizada.</p>
+  <p class="mudo">Arquivos de exemplo na pasta <code>dados_exemplo</code> do projeto.</p>
+</section>
+{% endblock %}
